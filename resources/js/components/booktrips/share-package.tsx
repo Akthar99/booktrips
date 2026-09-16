@@ -1,0 +1,124 @@
+import { useEffect, useRef, useState } from 'react';
+import { Check, Copy, Share2 } from 'lucide-react';
+
+/**
+ * Copy / WhatsApp / Facebook sharing for a public package link.
+ */
+export default function SharePackage({
+    slug,
+    id,
+    title,
+    label = 'Share',
+    className,
+}: {
+    slug?: string | null;
+    id: number;
+    title: string;
+    label?: string;
+    className?: string;
+}) {
+    const [open, setOpen] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const wrap = useRef<HTMLDivElement>(null);
+
+    const path = `/packages/${slug || id}`;
+    const url = typeof window === 'undefined' ? path : `${window.location.origin}${path}`;
+    const text = `${title} · BookTrips.lk`;
+
+    useEffect(() => {
+        function onDoc(event: MouseEvent) {
+            if (wrap.current && !wrap.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        }
+
+        document.addEventListener('mousedown', onDoc);
+
+        return () => document.removeEventListener('mousedown', onDoc);
+    }, []);
+
+    async function copy() {
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1800);
+        } catch {
+            window.prompt('Copy this link', url);
+        }
+    }
+
+    async function nativeShare() {
+        if (navigator.share) {
+            try {
+                await navigator.share({ title, text, url });
+                setOpen(false);
+
+                return;
+            } catch {
+                // fall through to the popover when the user cancels or the browser refuses
+            }
+        }
+
+        setOpen((value) => !value);
+    }
+
+    return (
+        <div className="relative inline-block" ref={wrap}>
+            <button
+                type="button"
+                className={
+                    className ??
+                    'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[13px] font-bold text-brand-900 transition hover:border-brand-700'
+                }
+                onClick={nativeShare}
+                aria-haspopup="dialog"
+                aria-expanded={open}
+            >
+                <Share2 size={14} />
+                {label}
+            </button>
+            {open ? (
+                <div className="absolute top-[calc(100%+6px)] right-0 z-90 w-72 rounded-[14px] border border-line bg-white p-3 text-left shadow-card">
+                    <span className="mb-2 block text-xs font-bold tracking-wide text-muted uppercase">
+                        Share this package
+                    </span>
+                    <div className="mb-2 flex items-center gap-2">
+                        <input
+                            readOnly
+                            value={url}
+                            className="input-base min-w-0 flex-1 text-[12px]"
+                            onFocus={(event) => event.target.select()}
+                        />
+                        <button
+                            type="button"
+                            className="grid h-9.5 w-9.5 shrink-0 cursor-pointer place-items-center rounded-lg border border-line bg-white text-brand-900"
+                            onClick={copy}
+                            aria-label="Copy link"
+                        >
+                            {copied ? <Check size={15} /> : <Copy size={15} />}
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-lg bg-brand-50 px-3 py-2 text-center text-[13px] font-bold text-brand-900"
+                        >
+                            WhatsApp
+                        </a>
+                        <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-lg bg-brand-50 px-3 py-2 text-center text-[13px] font-bold text-brand-900"
+                        >
+                            Facebook
+                        </a>
+                    </div>
+                    {copied ? <span className="mt-2 block text-xs font-bold text-brand-800">Link copied</span> : null}
+                </div>
+            ) : null}
+        </div>
+    );
+}

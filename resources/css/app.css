@@ -1,0 +1,74 @@
+@import 'tailwindcss';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@theme {
+    --font-sans:
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+
+    /* BookTrips warm-green brand scale */
+    --color-brand-50: #f3faf4;
+    --color-brand-100: #e3f6e8;
+    --color-brand-500: #8ed4b0;
+    --color-brand-600: #6bc89a;
+    --color-brand-700: #52b788;
+    --color-brand-800: #3e9b6c;
+    --color-brand-900: #2f7a55;
+    --color-brand-950: #1b4332;
+
+    /* Dark sections */
+    --color-navy-700: #1a3a5c;
+    --color-navy-800: #102844;
+    --color-navy-900: #0b1d36;
+    --color-navy-950: #071221;
+
+    --color-cream: #f7f4ee;
+    --color-cream-dark: #efebe3;
+
+    --color-ink: #1c1917;
+    --color-muted: #5c6b73;
+    --color-line: #e6e0d4;
+    --color-gold: #c4a35a;
+    --color-danger: #b42318;
+    --color-warn: #b45309;
+
+    --radius-card: 18px;
+    --shadow-card: 0 12px 40px rgba(28, 25, 23, 0.08);
+}
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-cream text-ink antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        @apply font-display tracking-tight;
+    }
+}
+
+@layer components {
+    .input-base {
+        @apply w-full rounded-xl border border-line bg-white px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-brand-700 focus:ring-2 focus:ring-brand-100;
+    }
+}
+
+/* Leaflet tweaks: keep map layers under sticky UI and match the site font. */
+.leaflet-container {
+    font-family: var(--font-sans);
+    z-index: 0;
+}
+
+.leaflet-popup-content a {
+    color: var(--color-brand-900);
+    font-weight: 700;
+}
