@@ -71,11 +71,11 @@ it('lets a guest apply and notifies the admins straight away', function () {
     $response->assertRedirect(route('partner.pending'));
 
     $user = User::query()->where('email', 'kasun@example.com')->firstOrFail();
+    $business = $user->business()->firstOrFail();
 
     expect($user->role)->toBe(UserRole::Business)
-        ->and($user->business)->not->toBeNull()
-        ->and($user->business->approved)->toBeFalse()
-        ->and($user->business->phone_verified_at)->not->toBeNull();
+        ->and($business->approved)->toBeFalse()
+        ->and($business->phone_verified_at)->not->toBeNull();
 
     $this->assertAuthenticatedAs($user);
 
@@ -165,12 +165,15 @@ it('upgrades a signed-in traveller on the same account', function () {
         ])
         ->assertRedirect(route('partner.pending'));
 
+    $fresh = $traveller->fresh();
+    $business = $fresh->business()->first();
+
     expect(User::query()->count())->toBe(2) // traveller (upgraded) + admin
-        ->and($traveller->fresh()->role)->toBe(UserRole::Business)
-        ->and($traveller->fresh()->business?->name)->toBe('Nimal Surf School')
-        ->and($traveller->fresh()->business?->approved)->toBeFalse()
-        ->and($traveller->fresh()->business?->phone)->toBe('0719999999')
-        ->and($traveller->fresh()->business?->phone_verified_at)->not->toBeNull();
+        ->and($fresh->role)->toBe(UserRole::Business)
+        ->and($business?->name)->toBe('Nimal Surf School')
+        ->and($business?->approved)->toBeFalse()
+        ->and($business?->phone)->toBe('0719999999')
+        ->and($business?->phone_verified_at)->not->toBeNull();
 
     $this->assertAuthenticatedAs($traveller);
 

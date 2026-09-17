@@ -27,7 +27,8 @@ class AdminPaymentController extends Controller
     public function index(): Response
     {
         $invoices = Invoice::query()
-            ->with(['business', 'receipts'])
+            ->select(['id', 'business_id', 'period', 'amount_lkr', 'status', 'paid_at'])
+            ->with(['business:id,name', 'receipts:id,invoice_id,status,created_at'])
             ->orderByDesc('period')
             ->get()
             ->map(fn (Invoice $invoice): array => [
@@ -51,7 +52,8 @@ class AdminPaymentController extends Controller
             ->all();
 
         $receipts = Receipt::query()
-            ->with(['business', 'invoice'])
+            ->select(['id', 'invoice_id', 'business_id', 'status', 'note', 'original_name', 'created_at', 'reviewed_at'])
+            ->with(['business:id,name', 'invoice:id,period,amount_lkr'])
             ->latest()
             ->take(100)
             ->get()
@@ -93,6 +95,8 @@ class AdminPaymentController extends Controller
     public function updateReceipt(UpdateReceiptRequest $request, Receipt $receipt): RedirectResponse
     {
         $status = ReceiptStatus::from($request->string('status')->value());
+
+        $receipt->loadMissing(['invoice', 'business']);
 
         $receipt->forceFill([
             'status' => $status,

@@ -19,27 +19,26 @@ class HomeController extends Controller
         $featured = Package::query()
             ->active()
             ->featured()
-            ->with('business')
+            ->with('business:id,name,type,city,cover_image')
             ->orderByDesc('rating')
             ->take(8)
             ->get()
             ->map(fn (Package $package): array => $this->presenter->packageCard($package))
             ->all();
 
+        // Pins only carry what MapPin renders — no image JSON, no price.
         $pins = Package::query()
             ->active()
             ->whereNotNull('lat')
             ->whereNotNull('lng')
+            ->select(['id', 'title', 'location', 'lat', 'lng'])
             ->get()
             ->map(fn (Package $package): array => [
                 'id' => $package->id,
                 'title' => $package->title,
-                'category' => $package->category,
                 'location' => $package->location,
                 'lat' => $package->lat,
                 'lng' => $package->lng,
-                'price_lkr' => $package->price_lkr,
-                'images' => $package->images ?? [],
             ])
             ->values()
             ->all();

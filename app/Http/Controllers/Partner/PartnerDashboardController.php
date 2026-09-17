@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Partner;
 
-use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Package;
@@ -21,19 +20,22 @@ class PartnerDashboardController extends Controller
     public function index(Request $request): Response
     {
         $business = $request->user()->business;
-        $packages = $business->packages()->orderByDesc('created_at')->get();
+        $packages = $business->packages()->with('business')->orderByDesc('created_at')->get();
 
-        $bookings = Booking::query()->where('business_id', $business->id);
+        // One aggregate instead of a count query per card.
+        $stats = Booking::query()
+            ->where('business_id', $business->id)
+            ->selectRaw('count(*) as total')
+            ->selectRaw("sum(case when status = 'confirmed' and check_in >= ? then 1 else 0 end) as upcoming", [now()->toDateString()])
+            ->selectRaw("sum(case when status = 'requested' then 1 else 0 end) as requested")
+            ->first();
 
         return Inertia::render('partner/dashboard', [
             'stats' => [
                 'packages' => $packages->count(),
-                'bookings' => (clone $bookings)->count(),
-                'upcoming' => (clone $bookings)
-                    ->where('status', BookingStatus::Confirmed)
-                    ->whereDate('check_in', '>=', now()->toDateString())
-                    ->count(),
-                'requested' => (clone $bookings)->where('status', BookingStatus::Requested)->count(),
+                'bookings' => (int) ($stats->total ?? 0),
+                'upcoming' => (int) ($stats->upcoming ?? 0),
+                'requested' => (int) ($stats->requested ?? 0),
             ],
             'packages' => $packages
                 ->map(fn (Package $package): array => $this->presenter->packageCard($package))

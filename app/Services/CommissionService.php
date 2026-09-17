@@ -20,6 +20,8 @@ class CommissionService
             return null;
         }
 
+        $booking->loadMissing('package');
+
         $package = $booking->package;
 
         if (! $package) {

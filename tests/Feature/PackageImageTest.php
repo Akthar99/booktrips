@@ -43,6 +43,22 @@ it('refuses photos larger than six megabytes', function () {
     ])->assertOk();
 });
 
+it('applies the watermark to an uploaded photo before responding', function () {
+    $upload = UploadedFile::fake()->image('beach.jpg', 900, 600);
+    $original = md5_file($upload->getRealPath());
+
+    $response = $this->actingAs($this->partner)->post('/partners/images', [
+        'images' => [$upload],
+    ]);
+
+    $response->assertOk();
+
+    $path = ltrim(json_decode($response->getContent(), true)['images'][0], '/storage/');
+
+    expect(Storage::disk('public')->exists($path))->toBeTrue()
+        ->and(md5_file(Storage::disk('public')->path($path)))->not->toBe($original);
+});
+
 it('stamps the configured watermark onto an image', function () {
     $path = Storage::disk('public')->path('packages/test/photo.png');
 

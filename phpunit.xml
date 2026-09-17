@@ -29,6 +29,10 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="INERTIA_SSR_ENABLED" value="false"/>
+        <!-- Tests must never reach a real bucket, whatever .env holds. -->
+        <env name="BOOKTRIPS_IMAGES_DISK" value="public"/>
+        <env name="BOOKTRIPS_RECEIPTS_DISK" value="local"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

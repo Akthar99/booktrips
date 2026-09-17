@@ -28,6 +28,7 @@ it('opens a thread and tells the admins', function () {
         ->assertRedirect();
 
     $ticket = SupportTicket::query()->firstOrFail();
+    $ticket->loadMissing('messages');
 
     expect($ticket->status)->toBe(TicketStatus::AwaitingAdmin)
         ->and($ticket->messages)->toHaveCount(1);
@@ -62,7 +63,7 @@ it('hands the thread back and forth', function () {
         ->assertRedirect();
 
     expect($ticket->fresh()->status)->toBe(TicketStatus::AwaitingAdmin)
-        ->and($ticket->fresh()->messages)->toHaveCount(3);
+        ->and($ticket->messages()->count())->toBe(3);
 });
 
 it('keeps other people out of a thread', function () {

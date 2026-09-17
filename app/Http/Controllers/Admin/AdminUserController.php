@@ -23,7 +23,8 @@ class AdminUserController extends Controller
         $role = (string) $request->query('role', 'all');
 
         $users = User::query()
-            ->with('business')
+            ->with('business:id,user_id,name,approved')
+            ->withCount('bookings')
             ->when($role !== '' && $role !== 'all', fn ($query) => $query->where('role', $role))
             ->when($q !== '', function ($query) use ($q): void {
                 $like = '%'.$q.'%';
@@ -46,7 +47,7 @@ class AdminUserController extends Controller
                 'email_verified' => $user->hasVerifiedEmail(),
                 'active' => $user->active,
                 'created_at' => $user->created_at?->toISOString(),
-                'booking_count' => $user->bookings()->count(),
+                'booking_count' => $user->bookings_count,
                 'business_name' => $user->business?->name,
                 'business_approved' => $user->business?->approved,
             ]);

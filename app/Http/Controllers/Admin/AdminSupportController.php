@@ -26,7 +26,7 @@ class AdminSupportController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         $tickets = SupportTicket::query()
-            ->with(['user', 'messages.author'])
+            ->with('user')
             ->when($status === 'open', fn ($query) => $query->where('status', '!=', TicketStatus::Resolved))
             ->when($status === 'resolved', fn ($query) => $query->where('status', TicketStatus::Resolved))
             ->when($status === 'awaiting_admin', fn ($query) => $query->where('status', TicketStatus::AwaitingAdmin))

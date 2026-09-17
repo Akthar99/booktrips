@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -48,6 +49,21 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(app()->isProduction());
 
         Model::shouldBeStrict(! app()->isProduction());
+
+        // Eloquent only applies preventLazyLoading to models hydrated from a multi-row
+        // result, so a single-row query can lazy load silently. Inside the test suite we
+        // flag every retrieved model as well, turning a missing eager load into a failing
+        // test instead of an extra query nobody notices. Local requests behave exactly
+        // like production and keep lazy loading available.
+        if (app()->runningUnitTests()) {
+            Event::listen('eloquent.retrieved: *', function (string $event, array $payload): void {
+                $model = $payload[0] ?? null;
+
+                if ($model instanceof Model) {
+                    $model->preventsLazyLoading = true;
+                }
+            });
+        }
 
         if (app()->isProduction()) {
             URL::forceScheme('https');

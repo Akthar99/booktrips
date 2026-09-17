@@ -229,13 +229,24 @@ queued mail — keep it running in production.
 | `tests/Feature/PartnerPanelTest.php` | pending-partner redirect, traveller/admin redirects away from partner areas, package CRUD + slug + discount guard, hide/re-list, cross-partner 403, image upload, private receipt upload/download + admin notification, analytics, dashboard counts |
 | `tests/Feature/AdminPanelTest.php` | console protection (404 to non-admins), application detail payload, partner approval + approval email, listing feature/unlist, suspension, admin self-protection, receipt confirm/reject (partner notified), admin-driven completion + commission |
 | `tests/Feature/EscalationTest.php` | stale escalation job, admins notified, answered bookings untouched |
+| `tests/Feature/PerformanceTest.php` | query budgets per page (catalogue, admin overview, partner dashboard, admin users, traveller bookings), SQL-side catalogue filtering/price sort, pagination |
 
 The suite runs on SQLite in-memory (`phpunit.xml`); locally it needs the `pdo_sqlite` and `gd`
 extensions enabled in `php.ini` (uploads use generated image fixtures).
 
 ---
 
-## 10. Deployment checklist
+## 9a. Performance
+
+- **Pagination happens in SQL.** The catalogue used to load every active listing into PHP, filter it in memory and slice it for the page. It now filters, sorts and paginates in the database (`?page=`, 12 per page), so the work is constant no matter how many listings exist.
+- **The discounted price has an SQL twin.** `PackageController::PRICE_SQL` mirrors `PricingService::pricingFor()` (percentage and fixed discounts, with the active-window date checks) so price filters and price sorting run in the database. If you change the pricing rules, change both — the four `?` placeholders take today's date.
+- **One aggregate per table on the admin overview.** It previously fired ~50 count/sum queries (18 of them for the six-month chart); it is now ~12, and the chart is two grouped queries.
+- **No per-row queries in lists.** `AdminUserController` uses `withCount('bookings')`; partner dashboard stats come from one `sum(case when ...)` aggregate; pin payloads for the maps only carry the fields the marker renders.
+- **Indexes** — `database/migrations/*_add_query_performance_indexes.php` adds the ones the hot paths need (catalogue price, partner booking counts, receipt queue, invoice periods, dispute queue, review author, ticket ordering). The migration is idempotent (`Schema::hasIndex`), so it is safe to re-run.
+- **Query budgets are tested.** `tests/Feature/PerformanceTest.php` pins the number of queries per page, so a regression (an N+1, a lost eager load, a stat returning to a per-card count) fails the suite instead of slowing the site down.
+- **Local reminder:** development currently points at the remote MariaDB host, so every query costs a network round trip (~80 ms each). Prefer a local MySQL/SQLite database for day-to-day work, or a local `SESSION_DRIVER`/`CACHE_STORE` of `file`, before blaming the code for slow pages.
+
+---
 
 1. Set the production `.env` from §6 (never commit it; `APP_KEY` unique per environment).
 2. `composer install --no-dev --optimize-autoloader`, `npm ci && npm run build`.

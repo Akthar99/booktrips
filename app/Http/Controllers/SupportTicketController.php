@@ -40,7 +40,7 @@ class SupportTicketController extends Controller
 
         return Inertia::render('support/index', [
             'tickets' => SupportTicket::query()
-                ->with(['user', 'messages.author'])
+                ->with('user')
                 ->where('user_id', $user->id)
                 ->latest('last_message_at')
                 ->take(30)

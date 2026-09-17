@@ -59,7 +59,7 @@ class DisputeService
     public function open(User $actor, Booking $booking, array $data): Dispute
     {
         $actor->loadMissing('business');
-        $booking->loadMissing(['package.business', 'user']);
+        $booking->loadMissing(['package.business.user', 'user']);
 
         // The business that owns the booking — not the actor's own business.
         $shop = $booking->package?->business;
@@ -142,6 +142,8 @@ class DisputeService
      */
     public function respond(Dispute $dispute, User $actor, string $response, array $evidence = []): Dispute
     {
+        $dispute->loadMissing(['booking', 'raisedBy', 'against']);
+
         if (! $dispute->isOpen()) {
             throw ValidationException::withMessages(['response' => 'This report has already been settled.']);
         }

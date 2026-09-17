@@ -37,74 +37,64 @@ class PackageController extends Controller
         $featured = $request->query('featured');
         $sort = (string) $request->query('sort', 'featured');
 
+        // Everything below is filtered, sorted and paginated in the database. The old
+        // version pulled every active package into memory and sliced it in PHP, which
+        // got slower with every listing added.
+        $dates = $this->priceDates();
+
         $packages = Package::query()
             ->active()
-            ->with('business')
-            ->get();
+            ->select([
+                'id', 'business_id', 'title', 'slug', 'category', 'highlight', 'location', 'district',
+                'images', 'price_lkr', 'price_type', 'duration_days', 'duration_nights', 'rating',
+                'review_count', 'featured', 'active', 'discount_enabled', 'discount_type',
+                'discount_value', 'discount_start', 'discount_end',
+            ])
+            ->with('business:id,name,type,city,cover_image')
+            ->when($query !== '', function ($builder) use ($query): void {
+                $like = '%'.$query.'%';
+                $builder->where(function ($inner) use ($like): void {
+                    $inner->where('title', 'like', $like)
+                        ->orWhere('location', 'like', $like)
+                        ->orWhere('district', 'like', $like)
+                        ->orWhere('category', 'like', $like)
+                        ->orWhere('description', 'like', $like);
+                });
+            })
+            ->when($category !== '' && $category !== 'all', fn ($builder) => $builder->whereIn('category', array_map('trim', explode(',', $category))))
+            ->when($district !== '', fn ($builder) => $builder->where('district', $district))
+            ->when($location !== '', function ($builder) use ($location): void {
+                $like = '%'.$location.'%';
+                $builder->where(function ($inner) use ($like): void {
+                    $inner->where('location', 'like', $like)->orWhere('district', 'like', $like);
+                });
+            })
+            ->when($featured === '1', fn ($builder) => $builder->where('featured', true))
+            ->when($guests !== null && $guests !== '', fn ($builder) => $builder->where('max_guests', '>=', (int) $guests))
+            ->when($minPrice !== null && $minPrice !== '', fn ($builder) => $builder->whereRaw(self::PRICE_SQL.' >= ?', [...$dates, (int) $minPrice]))
+            ->when($maxPrice !== null && $maxPrice !== '', fn ($builder) => $builder->whereRaw(self::PRICE_SQL.' <= ?', [...$dates, (int) $maxPrice]))
+            ->when(true, function ($builder) use ($sort, $dates): void {
+                match ($sort) {
+                    'price_asc' => $builder->orderByRaw(self::PRICE_SQL.' asc', $dates),
+                    'price_desc' => $builder->orderByRaw(self::PRICE_SQL.' desc', $dates),
+                    'rating' => $builder->orderByRaw('rating desc'),
+                    default => $builder->orderByRaw('featured desc, rating desc'),
+                };
+            })
+            ->orderByDesc('id')
+            ->paginate(12)
+            ->withQueryString();
 
-        if ($query !== '') {
-            $needle = mb_strtolower($query);
-            $packages = $packages->filter(fn (Package $package): bool => str_contains(mb_strtolower($package->title), $needle)
-                || str_contains(mb_strtolower($package->location), $needle)
-                || str_contains(mb_strtolower((string) $package->district), $needle)
-                || str_contains(mb_strtolower($package->category), $needle)
-                || str_contains(mb_strtolower($package->description), $needle));
-        }
-
-        if ($category !== '' && $category !== 'all') {
-            $categories = array_map('trim', explode(',', $category));
-            $packages = $packages->whereIn('category', $categories);
-        }
-
-        if ($district !== '') {
-            $needle = mb_strtolower($district);
-            $packages = $packages->filter(fn (Package $package): bool => mb_strtolower((string) $package->district) === $needle);
-        }
-
-        if ($location !== '') {
-            $needle = mb_strtolower($location);
-            $packages = $packages->filter(fn (Package $package): bool => str_contains(mb_strtolower($package->location), $needle)
-                || str_contains(mb_strtolower((string) $package->district), $needle));
-        }
-
-        if ($featured === '1') {
-            $packages = $packages->where('featured', true);
-        }
-
-        if ($guests !== null && $guests !== '') {
-            $wanted = (int) $guests;
-            $packages = $packages->filter(fn (Package $package): bool => $package->max_guests >= $wanted);
-        }
-
-        $cards = $packages->map(fn (Package $package): array => $this->presenter->packageCard($package));
-
-        if ($minPrice !== null && $minPrice !== '') {
-            $cards = $cards->filter(fn (array $card): bool => $card['display_price_lkr'] >= (int) $minPrice);
-        }
-
-        if ($maxPrice !== null && $maxPrice !== '') {
-            $cards = $cards->filter(fn (array $card): bool => $card['display_price_lkr'] <= (int) $maxPrice);
-        }
-
-        $cards = match ($sort) {
-            'price_asc' => $cards->sortBy('display_price_lkr')->values(),
-            'price_desc' => $cards->sortByDesc('display_price_lkr')->values(),
-            'rating' => $cards->sortByDesc('rating')->values(),
-            default => $cards->sortByDesc(fn (array $card): string => sprintf('%d-%08d', $card['featured'] ? 1 : 0, (int) round($card['rating'] * 1000)))->values(),
-        };
-
-        $total = $cards->count();
-        $perPage = 12;
-        $page = max((int) $request->query('page', 1), 1);
-        $lastPage = max((int) ceil($total / $perPage), 1);
+        $cards = $packages->getCollection()
+            ->map(fn (Package $package): array => $this->presenter->packageCard($package));
 
         return Inertia::render('search', [
-            'packages' => $cards->slice(($page - 1) * $perPage, $perPage)->values()->all(),
-            'total' => $total,
+            'packages' => $cards->values()->all(),
+            'total' => $packages->total(),
             'pagination' => [
-                'page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
+                'page' => $packages->currentPage(),
+                'last_page' => $packages->lastPage(),
+                'per_page' => $packages->perPage(),
             ],
             'categories' => config('booktrips.categories'),
             'destinations' => config('booktrips.destinations'),
@@ -159,6 +149,36 @@ class PackageController extends Controller
     }
 
     /**
+     * SQL twin of PricingService::pricingFor()'s unit price, so the catalogue can filter
+     * and sort on the discounted price instead of loading every listing into PHP.
+     *
+     * The four date placeholders take today's date, in the order the branches read them.
+     */
+    private const string PRICE_SQL = "case
+            when discount_enabled = 1 and discount_value > 0
+                and (discount_start is null or discount_start <= ?)
+                and (discount_end is null or discount_end >= ?)
+                and discount_type = 'percentage'
+                then price_lkr - round(price_lkr * 1.0 * (case when discount_value > 100 then 100 else discount_value end) / 100.0)
+            when discount_enabled = 1 and discount_value > 0
+                and (discount_start is null or discount_start <= ?)
+                and (discount_end is null or discount_end >= ?)
+                and discount_type = 'fixed'
+                then case when round(discount_value) >= price_lkr then 0 else price_lkr - round(discount_value) end
+            else price_lkr
+        end";
+
+    /**
+     * @return array<int, string>
+     */
+    private function priceDates(): array
+    {
+        $today = now()->toDateString();
+
+        return [$today, $today, $today, $today];
+    }
+
+    /**
      * Map pins for the explore page.
      */
     public function map(): Response
@@ -167,17 +187,16 @@ class PackageController extends Controller
             ->active()
             ->whereNotNull('lat')
             ->whereNotNull('lng')
+            ->select(['id', 'title', 'location', 'lat', 'lng', 'category', 'price_lkr'])
             ->get()
             ->map(fn (Package $package): array => [
                 'id' => $package->id,
                 'title' => $package->title,
-                'slug' => $package->slug,
-                'category' => $package->category,
                 'location' => $package->location,
+                'category' => $package->category,
                 'lat' => $package->lat,
                 'lng' => $package->lng,
                 'price_lkr' => $package->price_lkr,
-                'images' => $package->images ?? [],
             ])
             ->values()
             ->all();

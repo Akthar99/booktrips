@@ -7,6 +7,8 @@ use App\Mail\PartnerApprovedMail;
 use App\Models\Business;
 use App\Services\MailService;
 use App\Services\NotificationService;
+use App\Services\PhoneVerificationService;
+use App\Services\SmsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -17,6 +19,8 @@ class AdminPartnerController extends Controller
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly MailService $mail,
+        private readonly SmsService $sms,
+        private readonly PhoneVerificationService $phones,
     ) {}
 
     /**
@@ -73,6 +77,8 @@ class AdminPartnerController extends Controller
 
         $this->authorize('approve', $business);
 
+        $business->loadMissing('user');
+
         $approved = (bool) $validated['approved'];
         $wasApproved = $business->approved;
 
@@ -94,6 +100,12 @@ class AdminPartnerController extends Controller
         // Congratulate first-time approvals only, never re-sends of the same state.
         if ($approved && ! $wasApproved) {
             $this->mail->quietSend($business->email ?? $business->user?->email, new PartnerApprovedMail($business));
+
+            $phone = $this->phones->normalise($business->phone);
+
+            if ($phone !== null) {
+                $this->sms->send($phone, 'Great news — BookTrips approved your partner application. Sign in and start publishing your packages.');
+            }
         }
 
         return back()->with('success', $approved ? 'Partner approved.' : 'Partner access revoked.');

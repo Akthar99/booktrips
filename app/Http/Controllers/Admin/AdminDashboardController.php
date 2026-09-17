@@ -3,19 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BookingStatus;
+use App\Enums\DisputeStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\ReceiptStatus;
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
-use App\Models\Booking;
-use App\Models\Business;
-use App\Models\Dispute;
-use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\Receipt;
 use App\Models\SupportTicket;
-use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,61 +25,95 @@ class AdminDashboardController extends Controller
     {
         $monthStart = now()->startOfMonth();
 
+        // One aggregate per table. This page used to fire ~50 separate count/sum
+        // queries, which is slow on any hosting and brutal over a remote database.
+        $requested = BookingStatus::Requested->value;
+        $confirmed = BookingStatus::Confirmed->value;
+        $completed = BookingStatus::Completed->value;
+        $paid = InvoiceStatus::Paid->value;
+
+        $users = (array) DB::table('users')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when role = ? then 1 else 0 end) as travellers', [UserRole::User->value])
+            ->selectRaw('sum(case when created_at >= ? then 1 else 0 end) as new_this_month', [$monthStart])
+            ->first();
+
+        $businesses = (array) DB::table('businesses')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when approved = 0 then 1 else 0 end) as pending')
+            ->selectRaw('sum(case when created_at >= ? then 1 else 0 end) as new_this_month', [$monthStart])
+            ->first();
+
+        $bookings = (array) DB::table('bookings')
+            ->selectRaw('count(*) as total')
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as requested', [$requested])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as confirmed', [$confirmed])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as completed', [$completed])
+            ->selectRaw('sum(case when status in (?, ?) then total_lkr else 0 end) as gmv', [$confirmed, $completed])
+            ->selectRaw('sum(case when escalated = 1 and status = ? then 1 else 0 end) as escalated', [$requested])
+            ->selectRaw('sum(case when created_at >= ? then 1 else 0 end) as this_month', [$monthStart])
+            ->selectRaw('sum(case when created_at >= ? and status in (?, ?) then total_lkr else 0 end) as gmv_this_month', [$monthStart, $confirmed, $completed])
+            ->first();
+
+        $invoices = (array) DB::table('invoices')
+            ->selectRaw('sum(amount_lkr) as billed')
+            ->selectRaw('sum(case when status = ? then amount_lkr else 0 end) as collected', [$paid])
+            ->selectRaw('sum(case when status != ? then amount_lkr else 0 end) as outstanding', [$paid])
+            ->selectRaw('sum(case when status != ? and created_at < ? then amount_lkr else 0 end) as overdue', [$paid, $monthStart])
+            ->selectRaw('sum(case when status != ? and created_at < ? then 1 else 0 end) as overdue_invoices', [$paid, $monthStart])
+            ->selectRaw('sum(case when status = ? then 1 else 0 end) as paid_invoices', [$paid])
+            ->selectRaw('sum(case when created_at >= ? then amount_lkr else 0 end) as commission_this_month', [$monthStart])
+            ->first();
+
+        $disputes = (array) DB::table('disputes')
+            ->where('status', '!=', DisputeStatus::Resolved->value)
+            ->selectRaw('sum(case when responded_at is not null then 1 else 0 end) as ready')
+            ->selectRaw('sum(case when responded_at is null then 1 else 0 end) as awaiting')
+            ->first();
+
+        $packagesLive = Package::query()->where('active', true)->count();
+        $receiptsPending = Receipt::query()->where('status', ReceiptStatus::Pending)->count();
+        $ticketsWaiting = SupportTicket::query()->where('status', TicketStatus::AwaitingAdmin)->count();
+
         return Inertia::render('admin/overview', [
             'stats' => [
-                'users' => User::query()->count(),
-                'travellers' => User::query()->where('role', UserRole::User)->count(),
-                'partners' => Business::query()->count(),
-                'partners_pending' => Business::query()->where('approved', false)->count(),
-                'packages_live' => Package::query()->where('active', true)->count(),
-                'bookings' => Booking::query()->count(),
-                'bookings_requested' => Booking::query()->where('status', BookingStatus::Requested)->count(),
-                'bookings_confirmed' => Booking::query()->where('status', BookingStatus::Confirmed)->count(),
-                'bookings_completed' => Booking::query()->where('status', BookingStatus::Completed)->count(),
-                'gmv_lkr' => (int) Booking::query()
-                    ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed])
-                    ->sum('total_lkr'),
-                'commission_due_lkr' => (int) Invoice::query()
-                    ->where('status', '!=', InvoiceStatus::Paid)
-                    ->sum('amount_lkr'),
-                'receipts_pending' => Receipt::query()->where('status', ReceiptStatus::Pending)->count(),
-                'bookings_escalated' => Booking::query()
-                    ->where('escalated', true)
-                    ->where('status', BookingStatus::Requested)
-                    ->count(),
+                'users' => (int) ($users['total'] ?? 0),
+                'travellers' => (int) ($users['travellers'] ?? 0),
+                'partners' => (int) ($businesses['total'] ?? 0),
+                'partners_pending' => (int) ($businesses['pending'] ?? 0),
+                'packages_live' => $packagesLive,
+                'bookings' => (int) ($bookings['total'] ?? 0),
+                'bookings_requested' => (int) ($bookings['requested'] ?? 0),
+                'bookings_confirmed' => (int) ($bookings['confirmed'] ?? 0),
+                'bookings_completed' => (int) ($bookings['completed'] ?? 0),
+                'gmv_lkr' => (int) ($bookings['gmv'] ?? 0),
+                'commission_due_lkr' => (int) ($invoices['outstanding'] ?? 0),
+                'receipts_pending' => $receiptsPending,
+                'bookings_escalated' => (int) ($bookings['escalated'] ?? 0),
             ],
             'finance' => [
-                'billed_lkr' => (int) Invoice::query()->sum('amount_lkr'),
-                'collected_lkr' => (int) Invoice::query()->where('status', InvoiceStatus::Paid)->sum('amount_lkr'),
-                'outstanding_lkr' => (int) Invoice::query()->where('status', '!=', InvoiceStatus::Paid)->sum('amount_lkr'),
-                'overdue_lkr' => (int) Invoice::query()
-                    ->where('status', '!=', InvoiceStatus::Paid)
-                    ->where('created_at', '<', $monthStart)
-                    ->sum('amount_lkr'),
-                'overdue_invoices' => (int) Invoice::query()
-                    ->where('status', '!=', InvoiceStatus::Paid)
-                    ->where('created_at', '<', $monthStart)
-                    ->count(),
-                'paid_invoices' => (int) Invoice::query()->where('status', InvoiceStatus::Paid)->count(),
+                'billed_lkr' => (int) ($invoices['billed'] ?? 0),
+                'collected_lkr' => (int) ($invoices['collected'] ?? 0),
+                'outstanding_lkr' => (int) ($invoices['outstanding'] ?? 0),
+                'overdue_lkr' => (int) ($invoices['overdue'] ?? 0),
+                'overdue_invoices' => (int) ($invoices['overdue_invoices'] ?? 0),
+                'paid_invoices' => (int) ($invoices['paid_invoices'] ?? 0),
             ],
             'thisMonth' => [
                 'label' => now()->format('F Y'),
-                'bookings' => Booking::query()->where('created_at', '>=', $monthStart)->count(),
-                'gmv_lkr' => (int) Booking::query()
-                    ->where('created_at', '>=', $monthStart)
-                    ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed])
-                    ->sum('total_lkr'),
-                'commission_lkr' => (int) Invoice::query()->where('created_at', '>=', $monthStart)->sum('amount_lkr'),
-                'new_users' => User::query()->where('created_at', '>=', $monthStart)->count(),
-                'new_partners' => Business::query()->where('created_at', '>=', $monthStart)->count(),
+                'bookings' => (int) ($bookings['this_month'] ?? 0),
+                'gmv_lkr' => (int) ($bookings['gmv_this_month'] ?? 0),
+                'commission_lkr' => (int) ($invoices['commission_this_month'] ?? 0),
+                'new_users' => (int) ($users['new_this_month'] ?? 0),
+                'new_partners' => (int) ($businesses['new_this_month'] ?? 0),
             ],
             'attention' => [
-                'disputes_ready' => Dispute::query()->open()->whereNotNull('responded_at')->count(),
-                'disputes_awaiting' => Dispute::query()->open()->whereNull('responded_at')->count(),
-                'tickets_waiting' => SupportTicket::query()->where('status', TicketStatus::AwaitingAdmin)->count(),
-                'receipts_pending' => Receipt::query()->where('status', ReceiptStatus::Pending)->count(),
-                'partners_pending' => Business::query()->where('approved', false)->count(),
-                'escalated' => Booking::query()->where('escalated', true)->where('status', BookingStatus::Requested)->count(),
+                'disputes_ready' => (int) ($disputes['ready'] ?? 0),
+                'disputes_awaiting' => (int) ($disputes['awaiting'] ?? 0),
+                'tickets_waiting' => $ticketsWaiting,
+                'receipts_pending' => $receiptsPending,
+                'partners_pending' => (int) ($businesses['pending'] ?? 0),
+                'escalated' => (int) ($bookings['escalated'] ?? 0),
             ],
             'months' => $this->monthly(),
             'topPartners' => $this->topPartners(),
@@ -91,27 +121,48 @@ class AdminDashboardController extends Controller
     }
 
     /**
-     * Six months of bookings, GMV and commission.
+     * Six months of bookings, GMV and commission in two grouped queries.
      *
      * @return array<int, array<string, mixed>>
      */
     private function monthly(): array
     {
+        $since = now()->subMonths(5)->startOfMonth();
+        $bucket = DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', created_at)"
+            : "date_format(created_at, '%Y-%m')";
+
+        $bookingRows = DB::table('bookings')
+            ->where('created_at', '>=', $since)
+            ->selectRaw($bucket.' as bucket')
+            ->selectRaw('count(*) as bookings')
+            ->selectRaw('sum(case when status in (?, ?) then total_lkr else 0 end) as gmv', [BookingStatus::Confirmed->value, BookingStatus::Completed->value])
+            ->groupBy('bucket')
+            ->get()
+            ->keyBy('bucket');
+
+        $invoiceRows = DB::table('invoices')
+            ->where('created_at', '>=', $since)
+            ->selectRaw($bucket.' as bucket')
+            ->selectRaw('sum(amount_lkr) as commission')
+            ->groupBy('bucket')
+            ->get()
+            ->keyBy('bucket');
+
         $months = [];
 
         for ($offset = 5; $offset >= 0; $offset--) {
             $start = now()->subMonths($offset)->startOfMonth();
-            $end = $start->copy()->endOfMonth();
+            $key = $start->format('Y-m');
 
-            $bookings = Booking::query()->whereBetween('created_at', [$start, $end]);
+            $bookings = (array) ($bookingRows[$key] ?? []);
+            $invoices = (array) ($invoiceRows[$key] ?? []);
 
             $months[] = [
                 'label' => $start->format('M'),
-                'bookings' => (clone $bookings)->count(),
-                'gmv_lkr' => (int) (clone $bookings)
-                    ->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed])
-                    ->sum('total_lkr'),
-                'commission_lkr' => (int) Invoice::query()->whereBetween('created_at', [$start, $end])->sum('amount_lkr'),
+                'bookings' => (int) ($bookings['bookings'] ?? 0),
+                'gmv_lkr' => (int) ($bookings['gmv'] ?? 0),
+                'commission_lkr' => (int) ($invoices['commission'] ?? 0),
             ];
         }
 

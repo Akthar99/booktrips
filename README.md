@@ -6,6 +6,8 @@ admins approve partners, receipts and keep an eye on everything.
 
 - **Stack:** Laravel 13 · PHP 8.3 · MySQL · Inertia v3 · React 19 · TypeScript · Tailwind v4 · Pest
 - **Architecture / migration notes:** see [`MIGRATION.md`](MIGRATION.md)
+- **Object storage:** see [`S3-STORAGE-MIGRATION.md`](S3-STORAGE-MIGRATION.md)
+- **Production deploys (Ploi):** see [section 11](#11-deploying-to-ploi-production) and [`deploy.sh`](deploy.sh)
 
 ---
 
@@ -27,7 +29,7 @@ Minimum `.env` values that matter:
 ```dotenv
 APP_URL=http://localhost:8000
 DB_CONNECTION=mysql / DB_DATABASE=... / DB_USERNAME=... / DB_PASSWORD=...
-QUEUE_CONNECTION=database      # booking mails, notifications and photo watermarking are queued
+QUEUE_CONNECTION=database      # booking mails and notifications are queued
 MAIL_MAILER=smtp               # or "log" locally to skip a real mailbox
 MAIL_HOST=... MAIL_PORT=... MAIL_USERNAME=... MAIL_PASSWORD=... MAIL_FROM_ADDRESS=...
 
@@ -155,7 +157,7 @@ super admin is sent back to `/admin`.
 | Dashboard | `/partners/dashboard` | Counters (listings, bookings, upcoming trips), recent reservations and quick actions |
 | Packages | `/partners/packages/new`, `/partners/packages/{id}/edit` | Create and edit listings: title, category, description, highlight, location, district, running days (always / date range / weekdays), duration, price + price type, discounts (percentage or fixed, optional date window), guest limits, included/excluded lists, a **plan by day** editor, meeting point, cancellation policy, photos, and a *List this package in search* toggle |
 | Map pin | inside the package form | Search an address or **click anywhere on the map** to drop the pin; the exact coordinates are shown and can be cleared. Packages without a pin are flagged because they never appear on the map |
-| Photos | upload inside the package form (`/partners/images`) | Up to 8 images, **6 MB each**, JPG/PNG/WebP. Every photo is stamped with a translucent **Booktrips.lk** watermark by a queued job, so uploading stays instant |
+| Photos | upload inside the package form (`/partners/images`) | Up to 8 images, **6 MB each**, JPG/PNG/WebP. Every photo is stamped with a translucent **Booktrips.lk** watermark before the upload response returns |
 | Share a package | **Share** button on the dashboard row, the edit page and the public listing | Copies the public link and offers WhatsApp / Facebook / the phone's native share sheet |
 | Hide / re-list | **Hide** and **List again** buttons on the dashboard | Hiding deactivates the listing (`active = false`) and drops it from search; *List again* publishes it back. The edit form has the same switch |
 | Reservations | `/partners/bookings` | List + day view, search by code/guest/package, filter by status or date, with counts of what needs an answer. You get a notification when a guest books **and** when a guest cancels |
@@ -257,8 +259,8 @@ arrive by email, and unanswered threads show up in the admin console under **Sup
    booking from Reservations, complete it and check `/partners/payments` for the generated
    commission invoice.
 6. Upload a receipt as the partner, confirm it as the admin, and watch the invoice turn `paid`.
-7. Drag a photo into the package form and confirm the Booktrips.lk watermark appears once the queued
-   job runs (`php artisan queue:work`, or `composer run dev` which runs the worker for you).
+7. Drag a photo into the package form and confirm the Booktrips.lk watermark is already applied when
+   the upload finishes.
 
 ---
 
@@ -295,14 +297,127 @@ app/
                         AnalyticsService, NotificationService, MailService, GeoSearchService,
                         SmsService (Text.lk), PhoneVerificationService (partner OTP),
                         ImageWatermarker (GD)
-  Jobs/                 WatermarkPackageImage (queued after each photo upload)
+  Jobs/                 WatermarkPackageImage (runs inline right after each photo upload)
 config/booktrips.php    commission rate, escalation window, capacity guard, bank details,
                         categories, destinations, upload limits
 resources/js/pages/     every screen (public, auth, traveller, partner, admin)
 resources/js/components/booktrips/   shared UI kit
 routes/web.php          the whole route map
-tests/Feature/          53 tests across auth, catalogue, booking, reviews, partner, admin, escalation
+tests/Feature/          114 tests across auth, catalogue, booking, reviews, partner, admin,
+                        escalation, performance and messaging
 ```
 
 Commission rate, escalation window, capacity guard and the bank details shown to partners are all
 in `config/booktrips.php` (or `BOOKTRIPS_*` env vars) — change them there, not in the UI.
+
+---
+
+## 11. Deploying to Ploi (production)
+
+Production target: **booktrips.lk** on a Ploi server — PHP 8.3+, Node 22, MySQL/MariaDB.
+The deploy script lives in [`deploy.sh`](deploy.sh) — paste it into
+**Ploi → Site → Repository → Deploy Script**.
+
+### One-time server setup
+
+1. **Create the site** for `booktrips.lk` with **PHP 8.3**, then enable the **`gd`** extension
+   (Ploi → PHP → Extensions) — it draws the photo watermark.
+2. **Node.js:** install **Node 22** for the site (Ploi → Node.js). `public/build` and
+   `bootstrap/ssr` are not committed, so every deploy rebuilds them.
+3. **Database:** create a MySQL database and user, and keep the credentials for the environment.
+4. **SSL:** issue a Let's Encrypt certificate from the panel (the app forces HTTPS in production).
+5. **Repository:** connect `https://github.com/Akthar99/booktrips` on the `main` branch.
+
+### Environment (Ploi → Site → Environment)
+
+```dotenv
+APP_NAME="BookTrips"
+APP_ENV=production
+APP_KEY=base64:...            # generate locally: php artisan key:generate --show
+APP_DEBUG=false
+APP_URL=https://booktrips.lk
+
+LOG_CHANNEL=stack
+LOG_STACK=daily
+LOG_LEVEL=warning
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=ploi_booktrips
+DB_USERNAME=ploi_booktrips
+DB_PASSWORD=
+
+SESSION_DRIVER=database
+SESSION_SECURE_COOKIE=true
+QUEUE_CONNECTION=database
+CACHE_STORE=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com    # your provider
+MAIL_PORT=587
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_FROM_ADDRESS="hello@booktrips.lk"
+MAIL_FROM_NAME="${APP_NAME}"
+
+TEXTLK_API_KEY=
+TEXTLK_SENDER_ID=             # the approved alphanumeric sender, not TextLKDemo
+TEXTLK_BASE_URL=https://app.text.lk/api/v3
+
+BOOKTRIPS_WATERMARK=true
+BOOKTRIPS_WATERMARK_TEXT="Booktrips.lk"
+INERTIA_SSR_ENABLED=true
+```
+
+Do **not** set `BOOKTRIPS_CA_BUNDLE` on the server (Linux has system CAs — it only exists for
+bare Windows hosts). Until real `MAIL_*` / `TEXTLK_*` values are filled in, emails and SMS fall
+back to `storage/logs`.
+
+### First deploy
+
+The deploy script pulls the code, installs Composer dependencies, builds the client + SSR
+bundles, migrates and restarts the long-running processes. After the first successful deploy,
+run these once (Ploi terminal / SSH):
+
+```bash
+cd /home/ploi/booktrips.lk
+php artisan db:seed --force     # seeds the catalogue (demo partners + 20 packages)
+php artisan inertia:check-ssr   # the SSR server should answer OK
+```
+
+Then promote your account to super admin (see section 2) and sign in at `/admin`.
+
+### Daemons (Ploi → Site → Daemons)
+
+Both daemons are required — directory `/home/ploi/booktrips.lk`:
+
+| Name | Command | Why |
+| --- | --- | --- |
+| `booktrips-queue` | `php artisan queue:work --sleep=3 --tries=3 --max-time=3600` | booking emails, notifications and partner approval mails sit in the database queue until this runs |
+| `booktrips-ssr` | `php artisan inertia:start-ssr` | renders the initial HTML (first paint + SEO); the deploy script restarts it on every release |
+
+### Scheduler (Ploi → Site → Cron Jobs)
+
+One cron job, **every minute**:
+
+```bash
+cd /home/ploi/booktrips.lk && php artisan schedule:run >> /dev/null 2>&1
+```
+
+It drives `booktrips:escalate-stale-bookings` (flags unanswered bookings after 24 hours).
+
+### Backups
+
+Back up the **database** and **`/home/ploi/booktrips.lk/storage/app`** — that directory holds
+every uploaded photo and payment receipt.
+
+### Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| Photos have no watermark | `php -m` must list `gd`; enable it in Ploi → PHP → Extensions and reload PHP-FPM |
+| SMS fails with a cURL/SSL error | `curl -I https://app.text.lk` on the server; if needed, point `BOOKTRIPS_CA_BUNDLE` at `/etc/ssl/certs/ca-certificates.crt` |
+| SSR daemon crash-loops | Its log usually says `node: command not found` — install Node 22 for the site, or set `INERTIA_SSR_RUNTIME` to the absolute `node` path |
+| Deployed but old UI | Check the deploy log for `npm run build:ssr` errors; `public/build/manifest.json` must exist |
+| All users share one rate-limit bucket (only if you add Cloudflare) | Uncomment `trustProxies` in `bootstrap/app.php` and trust the proxy |

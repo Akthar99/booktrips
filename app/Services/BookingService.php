@@ -22,6 +22,8 @@ class BookingService
         private readonly CommissionService $commission,
         private readonly NotificationService $notifications,
         private readonly MailService $mail,
+        private readonly SmsService $sms,
+        private readonly PhoneVerificationService $phones,
     ) {}
 
     /**
@@ -31,6 +33,8 @@ class BookingService
      */
     public function create(User $user, Package $package, array $data): Booking
     {
+        $package->loadMissing('business');
+
         if (! $package->active) {
             throw ValidationException::withMessages([
                 'package' => 'This package is not available right now.',
@@ -93,6 +97,12 @@ class BookingService
             );
 
             $this->mail->quietSend($business->email, new HostBookingNoticeMail($booking, $package));
+
+            $phone = $this->phones->normalise($business->phone);
+
+            if ($phone !== null) {
+                $this->sms->send($phone, "New BookTrips request {$booking->booking_code}: {$booking->guest_name}, {$booking->guests} guests, {$booking->check_in->toDateString()}. Confirm in your dashboard.");
+            }
         }
 
         return $booking;
@@ -106,6 +116,8 @@ class BookingService
         if ($booking->status === $status) {
             return $booking;
         }
+
+        $booking->loadMissing(['user', 'package']);
 
         if (! $this->canTransition($booking, $status, $actor)) {
             throw ValidationException::withMessages([

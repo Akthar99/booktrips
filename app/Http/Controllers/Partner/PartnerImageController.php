@@ -12,8 +12,8 @@ class PartnerImageController extends Controller
     /**
      * Upload package photos to the public disk and return their URLs.
      *
-     * The BookTrips watermark is applied by a queued job afterwards so the
-     * partner is not kept waiting for image processing.
+     * The BookTrips watermark is applied before the response is sent, so the
+     * returned URLs always point at the branded image — no queue worker required.
      */
     public function store(StoreImagesRequest $request): JsonResponse
     {
@@ -23,7 +23,7 @@ class PartnerImageController extends Controller
             ->map(function ($file) use ($business): string {
                 $path = $file->store("packages/{$business->id}", 'public');
 
-                WatermarkPackageImage::dispatch('public', $path);
+                WatermarkPackageImage::dispatchSync('public', $path);
 
                 return '/storage/'.$path;
             })

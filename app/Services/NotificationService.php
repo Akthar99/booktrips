@@ -38,6 +38,8 @@ class NotificationService
 
     public function notifyBusinessOwner(Business $business, string $type, string $title, string $body = '', ?int $bookingId = null, ?string $link = null): void
     {
+        $business->loadMissing('user');
+
         $owner = $business->user;
 
         if ($owner) {

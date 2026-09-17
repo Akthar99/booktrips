@@ -32,7 +32,7 @@ class AdminBusinessController extends Controller
         $business->load('user');
 
         $bookings = $business->bookings()
-            ->with(['package', 'user'])
+            ->with(['package.business', 'user'])
             ->latest()
             ->take(25)
             ->get();

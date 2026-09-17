@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\TicketStatus;
 use App\Mail\SupportReplyMail;
 use App\Models\Booking;
-use App\Models\Business;
 use App\Models\SupportMessage;
 use App\Models\SupportTicket;
 use App\Models\User;
@@ -30,13 +29,11 @@ class SupportService
         $bookingId = $data['booking_id'] ?? null;
 
         if ($bookingId !== null) {
-            $businessId = $user->business instanceof Business ? $user->business->id : 0;
-
             $owns = Booking::query()
                 ->whereKey($bookingId)
-                ->where(function ($query) use ($user, $businessId): void {
+                ->where(function ($query) use ($user): void {
                     $query->where('user_id', $user->id)
-                        ->orWhere('business_id', $businessId);
+                        ->orWhereHas('business', fn ($business) => $business->where('user_id', $user->id));
                 })
                 ->exists();
 
@@ -100,6 +97,8 @@ class SupportService
         });
 
         if ($staff) {
+            $ticket->loadMissing('user');
+
             $owner = $ticket->user;
 
             if ($owner) {
@@ -132,6 +131,8 @@ class SupportService
         $ticket->forceFill(['status' => $status])->save();
 
         if ($status === TicketStatus::Resolved) {
+            $ticket->loadMissing('user');
+
             $owner = $ticket->user;
 
             if ($owner) {
