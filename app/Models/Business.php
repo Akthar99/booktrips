@@ -30,6 +30,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $tiktok
  * @property string|null $whatsapp
  * @property bool $approved
+ * @property int $strikes
  * @property CarbonImmutable|null $phone_verified_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

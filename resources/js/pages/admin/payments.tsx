@@ -5,6 +5,7 @@ import ConfirmDialog from '@/components/booktrips/confirm-dialog';
 import StatusBadge from '@/components/booktrips/status-badge';
 import Tabs from '@/components/booktrips/tabs';
 import { withAppLayout } from '@/layouts/app-layout';
+import { ADMIN_TABS } from '@/lib/admin-tabs';
 import { formatDateTime, lkr } from '@/lib/booktrips';
 import type { BankDetails, InvoiceData } from '@/types/booktrips';
 import type { InertiaComponent } from '@/types/inertia';
@@ -25,11 +26,18 @@ type AdminReceipt = {
 type AdminPaymentsProps = {
     bank: BankDetails;
     commissionRate: number;
+    summary: {
+        billed_lkr: number;
+        collected_lkr: number;
+        outstanding_lkr: number;
+        overdue_lkr: number;
+        pending_receipts: number;
+    };
     invoices: InvoiceData[];
     receipts: AdminReceipt[];
 };
 
-const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipts }) => {
+const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipts, summary }) => {
     const [pending, setPending] = useState<{ receipt: AdminReceipt; status: string } | null>(null);
     const [busy, setBusy] = useState(false);
 
@@ -53,17 +61,22 @@ const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipt
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">Super admin</h1>
-            <Tabs
-                items={[
-                    { label: 'Overview', href: '/admin', exact: true },
-                    { label: 'Users', href: '/admin/users' },
-                    { label: 'Partners', href: '/admin/partners' },
-                    { label: 'Listings', href: '/admin/listings' },
-                    { label: 'Bookings', href: '/admin/bookings' },
-                    { label: 'Finance', href: '/admin/payments' },
-                    { label: 'Reviews', href: '/admin/reviews' },
-                ]}
-            />
+            <Tabs items={ADMIN_TABS} />
+            <h2 className="mb-3 text-2xl">Finance</h2>
+            <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-5">
+                {[
+                    ['Billed', lkr(summary.billed_lkr)],
+                    ['Collected', lkr(summary.collected_lkr)],
+                    ['Outstanding', lkr(summary.outstanding_lkr)],
+                    ['Overdue', lkr(summary.overdue_lkr)],
+                    ['Receipts to review', String(summary.pending_receipts)],
+                ].map(([label, value]) => (
+                    <div key={label} className="rounded-2xl border border-line bg-white p-4">
+                        <span className="text-[12px] font-bold text-muted">{label}</span>
+                        <strong className="block font-display text-[22px]">{value}</strong>
+                    </div>
+                ))}
+            </div>
             <h2 className="mb-3 text-2xl">Payment receipts</h2>
             <p className="mb-3 text-muted">Confirm a transfer to mark that invoice paid.</p>
             <div className="overflow-x-auto rounded-2xl border border-line bg-white">

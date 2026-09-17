@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Booking;
+use App\Models\Business;
 use App\Models\Invoice;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +77,58 @@ class CommissionService
         });
 
         return $invoice;
+    }
+
+    /**
+     * Bill a penalty (a dispute the partner lost) on their current invoice.
+     */
+    public function addPenalty(Business $business, int $amountLkr, string $reason): Invoice
+    {
+        $period = $this->monthKey();
+
+        return DB::transaction(function () use ($business, $amountLkr, $reason, $period): Invoice {
+            $line = [
+                'booking_id' => null,
+                'booking_code' => null,
+                'reason' => $reason,
+                'penalty' => true,
+                'amount_lkr' => $amountLkr,
+            ];
+
+            $invoice = Invoice::query()
+                ->where('business_id', $business->id)
+                ->where('period', $period)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $invoice) {
+                return Invoice::create([
+                    'business_id' => $business->id,
+                    'period' => $period,
+                    'amount_lkr' => $amountLkr,
+                    'status' => InvoiceStatus::Open,
+                    'lines' => [$line],
+                ]);
+            }
+
+            if ($invoice->status !== InvoiceStatus::Paid) {
+                $invoice->update([
+                    'amount_lkr' => $invoice->amount_lkr + $amountLkr,
+                    'lines' => [...($invoice->lines ?? []), $line],
+                ]);
+
+                return $invoice;
+            }
+
+            // Already settled: keep the penalty on its own adjustment invoice.
+            return Invoice::create([
+                'business_id' => $business->id,
+                'period' => $period.'-pen',
+                'amount_lkr' => $amountLkr,
+                'status' => InvoiceStatus::Open,
+                'lines' => [$line],
+            ]);
+        });
     }
 
     public function monthKey(string|Carbon|null $date = null): string

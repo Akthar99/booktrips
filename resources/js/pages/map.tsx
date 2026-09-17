@@ -91,7 +91,9 @@ const ExploreMap: InertiaComponent<MapProps> = ({ packages, categories }) => {
     }, [packages, here, category, query, maxDistance]);
 
     const suggestions = here ? shown.slice(0, 6) : [];
-    const mapPins = here ? [{ lat: here.lat, lng: here.lng, title: 'Your location' }, ...shown] : shown;
+    const mapPins: MapPin[] = here
+        ? [{ lat: here.lat, lng: here.lng, kind: 'you', title: 'Your location' }, ...shown]
+        : shown;
 
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
@@ -147,13 +149,7 @@ const ExploreMap: InertiaComponent<MapProps> = ({ packages, categories }) => {
                 ) : null}
             </div>
             {error ? <Alert tone="warn">{error}</Alert> : null}
-            <MapView
-                pins={mapPins}
-                center={here ? [here.lat, here.lng] : undefined}
-                height={420}
-                zoom={here ? 12 : 7}
-                focusCenter={Boolean(here)}
-            />
+            <MapView pins={mapPins} height={420} zoom={here ? 10 : 7} />
             {here ? (
                 <>
                     <div className="mt-7 mb-3.5 flex items-end justify-between gap-4">

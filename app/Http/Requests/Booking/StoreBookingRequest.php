@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Booking;
 
+use App\Services\PhoneVerificationService;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBookingRequest extends FormRequest
@@ -21,6 +23,28 @@ class StoreBookingRequest extends FormRequest
             'guest_name' => ['required', 'string', 'max:120'],
             'guest_phone' => ['required', 'string', 'max:40'],
             'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * The contact number must pass the SMS code check before the request is sent.
+     *
+     * @return array<int, callable>
+     */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $phones = app(PhoneVerificationService::class);
+                $submitted = $phones->normalise((string) $this->input('guest_phone'));
+
+                if ($submitted === null || $phones->sessionVerifiedPhone(PhoneVerificationService::PURPOSE_BOOKING) !== $submitted) {
+                    $validator->errors()->add(
+                        'guest_phone',
+                        'Verify the mobile number with the code we text you before sending the request.',
+                    );
+                }
+            },
         ];
     }
 

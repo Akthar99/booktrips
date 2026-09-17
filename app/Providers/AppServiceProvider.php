@@ -55,8 +55,8 @@ class AppServiceProvider extends ServiceProvider
 
         // SMS one-time codes are expensive and abusable, so they are metered twice:
         // per IP here, and per phone number inside PhoneVerificationService.
-        RateLimiter::for('partner-otp', fn (Request $request): Limit => Limit::perMinutes(10, 6)->by($request->ip()));
-        RateLimiter::for('partner-otp-confirm', fn (Request $request): Limit => Limit::perMinutes(10, 12)->by($request->ip()));
+        RateLimiter::for('sms-otp', fn (Request $request): Limit => Limit::perMinutes(10, 6)->by($request->ip()));
+        RateLimiter::for('sms-otp-confirm', fn (Request $request): Limit => Limit::perMinutes(10, 12)->by($request->ip()));
 
         // BookTrips password policy: 8+ characters with upper, lower, number and symbol.
         Password::defaults(fn (): Password => Password::min(8)

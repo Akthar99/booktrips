@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $phone
  * @property UserRole $role
  * @property bool $active
+ * @property int $strikes
  * @property string|null $pending_email
  * @property Carbon|null $pending_email_requested_at
  * @property string|null $remember_token

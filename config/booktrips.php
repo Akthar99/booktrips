@@ -29,6 +29,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Disputes (reports between travellers and partners)
+    |--------------------------------------------------------------------------
+    |
+    | How long the reported party has to give their side before a super admin
+    | may hand down a verdict.
+    |
+    */
+
+    'disputes' => [
+        'response_hours' => (int) env('BOOKTRIPS_DISPUTE_RESPONSE_HOURS', 48),
+        'strikes_to_suspend' => 3,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Bank account partners transfer the monthly commission to
     |--------------------------------------------------------------------------
     |
@@ -179,6 +194,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Outbound HTTP
+    |--------------------------------------------------------------------------
+    |
+    | Point this at a CA bundle (cacert.pem) when the host running PHP has no
+    | curl.cainfo configured — common on bare Windows installs. TLS verification
+    | always stays on; this only tells cURL which root certificates to trust.
+    |
+    */
+
+    'http' => [
+        'ca_bundle' => env('BOOKTRIPS_CA_BUNDLE'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | SMS (Text.lk) — partner phone verification
     |--------------------------------------------------------------------------
     */
@@ -186,7 +216,8 @@ return [
     'sms' => [
         'base_url' => env('TEXTLK_BASE_URL', 'https://app.text.lk/api/v3'),
         'api_key' => env('TEXTLK_API_KEY'),
-        'sender_id' => env('TEXTLK_SENDER_ID', 'Booktrips.lk'),
+        // Text.lk allows alphanumeric sender ids up to 11 characters.
+        'sender_id' => env('TEXTLK_SENDER_ID', 'BookTrips'),
 
         'otp' => [
             'length' => 6,

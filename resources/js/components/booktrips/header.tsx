@@ -107,6 +107,7 @@ export default function Header() {
                                           ['Finance', '/partners/payments'],
                                           ['Map', '/map'],
                                           ['My account', '/account'],
+                                          ['Help & support', '/support'],
                                       ]
                                     : [
                                           ['Explore', '/search'],
@@ -120,6 +121,7 @@ export default function Header() {
                                                         ? [['Application', '/partners/pending']]
                                                         : []),
                                                     ...(isAdmin ? [['Admin', '/admin']] : []),
+                                                    ['Help & support', '/support'],
                                                 ]
                                               : [
                                                     ['Log in', '/login'],

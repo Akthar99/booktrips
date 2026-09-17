@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { store as bookingStore } from '@/actions/App/Http/Controllers/BookingController';
+import {
+    confirm as bookingPhoneConfirm,
+    send as bookingPhoneSend,
+} from '@/actions/App/Http/Controllers/AccountPhoneVerificationController';
 import { quote as quoteRoute } from '@/actions/App/Http/Controllers/PackageController';
 import Alert from '@/components/booktrips/alert';
 import DateInput from '@/components/booktrips/date-input';
 import { Field, Input, Textarea } from '@/components/booktrips/field';
+import PhoneVerification from '@/components/booktrips/phone-verification';
 import { withAppLayout } from '@/layouts/app-layout';
 import { lkr } from '@/lib/booktrips';
 import type { PackageDetailData, SharedProps } from '@/types/booktrips';
@@ -17,9 +22,12 @@ type Quote = {
     total_lkr: number;
 };
 
-type BookProps = { package: PackageDetailData };
+type BookProps = {
+    package: PackageDetailData;
+    verifiedPhone: string | null;
+};
 
-const Book: InertiaComponent<BookProps> = ({ package: pkg }) => {
+const Book: InertiaComponent<BookProps> = ({ package: pkg, verifiedPhone }) => {
     const page = usePage<SharedProps>();
     const user = page.props.auth.user;
 
@@ -43,6 +51,7 @@ const Book: InertiaComponent<BookProps> = ({ package: pkg }) => {
     });
     const [quote, setQuote] = useState<Quote | null>(null);
     const [error, setError] = useState('');
+    const [phoneVerified, setPhoneVerified] = useState(false);
     const [busy, setBusy] = useState(false);
 
     useEffect(() => {
@@ -81,6 +90,13 @@ const Book: InertiaComponent<BookProps> = ({ package: pkg }) => {
 
     function submit(event: React.FormEvent) {
         event.preventDefault();
+
+        if (!phoneVerified) {
+            setError('Verify your mobile number with the code we text you before sending the request.');
+
+            return;
+        }
+
         setBusy(true);
         setError('');
 
@@ -188,6 +204,15 @@ const Book: InertiaComponent<BookProps> = ({ package: pkg }) => {
                         onChange={(event) => setForm({ ...form, guest_phone: event.target.value })}
                     />
                 </Field>
+                <PhoneVerification
+                    phone={form.guest_phone}
+                    onPhoneChange={(value) => setForm({ ...form, guest_phone: value })}
+                    verifiedPhone={verifiedPhone}
+                    sendUrl={bookingPhoneSend.url()}
+                    confirmUrl={bookingPhoneConfirm.url()}
+                    onVerifiedChange={setPhoneVerified}
+                    hint="Hosts need a reachable number. We text a 6-digit code to confirm it — this also unlocks your trip guarantees."
+                />
                 <Field label="Notes for the host">
                     <Textarea
                         placeholder="Pickup point, diet, kids…"

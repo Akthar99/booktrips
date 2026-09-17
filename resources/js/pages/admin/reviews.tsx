@@ -1,6 +1,7 @@
 import StarRating from '@/components/booktrips/star-rating';
 import Tabs from '@/components/booktrips/tabs';
 import { withAppLayout } from '@/layouts/app-layout';
+import { ADMIN_TABS } from '@/lib/admin-tabs';
 import { formatDateTime } from '@/lib/booktrips';
 import type { Paginated } from '@/types/booktrips';
 import type { InertiaComponent } from '@/types/inertia';
@@ -22,17 +23,7 @@ const AdminReviews: InertiaComponent<ReviewsProps> = ({ reviews }) => {
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">Super admin</h1>
-            <Tabs
-                items={[
-                    { label: 'Overview', href: '/admin', exact: true },
-                    { label: 'Users', href: '/admin/users' },
-                    { label: 'Partners', href: '/admin/partners' },
-                    { label: 'Listings', href: '/admin/listings' },
-                    { label: 'Bookings', href: '/admin/bookings' },
-                    { label: 'Finance', href: '/admin/payments' },
-                    { label: 'Reviews', href: '/admin/reviews' },
-                ]}
-            />
+            <Tabs items={ADMIN_TABS} />
             <h2 className="mb-3 text-2xl">Reviews</h2>
             <div className="overflow-x-auto rounded-2xl border border-line bg-white">
                 <table className="w-full border-collapse text-left">

@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useForm } from '@inertiajs/react';
-import { CheckCircle2 } from 'lucide-react';
 import {
     confirm as partnerPhoneConfirm,
     send as partnerPhoneSend,
@@ -10,8 +9,8 @@ import Alert from '@/components/booktrips/alert';
 import Button from '@/components/booktrips/button';
 import { Field, Input, Select, Textarea } from '@/components/booktrips/field';
 import PasswordRules from '@/components/booktrips/password-rules';
+import PhoneVerification from '@/components/booktrips/phone-verification';
 import { withAuthLayout } from '@/layouts/app-layout';
-import { useCountdown } from '@/lib/use-countdown';
 import type { InertiaComponent } from '@/types/inertia';
 
 type ApplyProps = {
@@ -20,21 +19,6 @@ type ApplyProps = {
     account: { name: string; email: string; phone: string } | null;
     verifiedPhone: string | null;
 };
-
-/** Mirror the server-side normalisation so the UI can recognise a verified number. */
-function normalisePhone(phone: string): string {
-    let digits = phone.replace(/[^0-9]/g, '');
-
-    if (digits.startsWith('0094')) {
-        digits = digits.slice(4);
-    } else if (digits.startsWith('94') && digits.length === 11) {
-        digits = digits.slice(2);
-    } else if (digits.startsWith('0') && digits.length === 10) {
-        digits = digits.slice(1);
-    }
-
-    return /^7\d{8}$/.test(digits) ? `94${digits}` : '';
-}
 
 const Apply: InertiaComponent<ApplyProps> = ({ businessTypes, mode, account, verifiedPhone }) => {
     const upgrading = mode === 'upgrade';
@@ -58,126 +42,16 @@ const Apply: InertiaComponent<ApplyProps> = ({ businessTypes, mode, account, ver
         cover_image: '',
     });
 
-    const [otpSent, setOtpSent] = useState(false);
-    const [otpCode, setOtpCode] = useState('');
     const [verified, setVerified] = useState(false);
-    const [otpBusy, setOtpBusy] = useState(false);
-    const [otpError, setOtpError] = useState('');
-    const [otpNote, setOtpNote] = useState('');
-    const resend = useCountdown();
+    const [verifyNotice, setVerifyNotice] = useState('');
     // "socials" is a cross-field rule, so it is not part of the form's own keys.
     const socialsError = (form.errors as Record<string, string | undefined>).socials;
-
-    // A number verified earlier in this session stays valid while the tab is open.
-    useEffect(() => {
-        if (!verifiedPhone || !form.data.phone) {
-            return;
-        }
-
-        if (verifiedPhone === normalisePhone(form.data.phone)) {
-            setVerified(true);
-        }
-    }, [verifiedPhone, form.data.phone]);
-
-    function xsrfToken(): string {
-        return decodeURIComponent(
-            document.cookie
-                .split('; ')
-                .find((row) => row.startsWith('XSRF-TOKEN='))
-                ?.split('=')[1] ?? '',
-        );
-    }
-
-    async function sendCode() {
-        setOtpBusy(true);
-        setOtpError('');
-        setOtpNote('');
-
-        try {
-            const response = await fetch(partnerPhoneSend.url(), {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': xsrfToken(),
-                },
-                body: JSON.stringify({ phone: form.data.phone }),
-            });
-
-            const data = (await response.json().catch(() => ({}))) as {
-                ok?: boolean;
-                message?: string;
-                cooldown?: number;
-                errors?: Record<string, string[]>;
-            };
-
-            if (!response.ok || !data.ok) {
-                setOtpError(
-                    data.errors ? (Object.values(data.errors).flat()[0] as string) : (data.message ?? 'Could not send the code.'),
-                );
-                resend.start(Math.max(0, data.cooldown ?? 0));
-
-                return;
-            }
-
-            setOtpSent(true);
-            resend.start(data.cooldown ?? 60);
-            setOtpNote('Code sent. Check your SMS.');
-        } catch {
-            setOtpError('Could not send the code. Check your connection and try again.');
-        } finally {
-            setOtpBusy(false);
-        }
-    }
-
-    async function verifyCode() {
-        setOtpBusy(true);
-        setOtpError('');
-        setOtpNote('');
-
-        try {
-            const response = await fetch(partnerPhoneConfirm.url(), {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': xsrfToken(),
-                },
-                body: JSON.stringify({ phone: form.data.phone, code: otpCode }),
-            });
-
-            const data = (await response.json().catch(() => ({}))) as {
-                ok?: boolean;
-                message?: string;
-                errors?: Record<string, string[]>;
-            };
-
-            if (!response.ok || !data.ok) {
-                setOtpError(
-                    data.errors ? (Object.values(data.errors).flat()[0] as string) : (data.message ?? 'Could not verify the code.'),
-                );
-
-                return;
-            }
-
-            setVerified(true);
-            setOtpNote('Mobile number verified.');
-        } catch {
-            setOtpError('Could not verify the code. Check your connection and try again.');
-        } finally {
-            setOtpBusy(false);
-        }
-    }
 
     function submit(event: React.FormEvent) {
         event.preventDefault();
 
         if (!verified) {
-            setOtpError('Verify your mobile number before submitting the application.');
+            setVerifyNotice('Verify your mobile number before submitting the application.');
 
             return;
         }
@@ -224,67 +98,29 @@ const Apply: InertiaComponent<ApplyProps> = ({ businessTypes, mode, account, ver
                         <Input
                             required
                             value={form.data.phone}
-                            onChange={(event) => {
-                                form.setData('phone', event.target.value);
-                                setVerified(false);
-                                setOtpSent(false);
-                                setOtpCode('');
-                            }}
+                            onChange={(event) => form.setData('phone', event.target.value)}
                         />
                         {form.errors.phone ? <Alert tone="error">{form.errors.phone}</Alert> : null}
                     </Field>
                 </div>
 
-                <div className="mb-3 rounded-xl border border-line bg-cream px-3.5 py-3">
-                    <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-brand-900">
-                        {verified ? <CheckCircle2 size={15} /> : null}
-                        {verified ? 'Mobile number verified' : 'Verify your mobile number'}
-                    </div>
-                    {!verified ? (
-                        <>
-                            <p className="mb-2 text-[12px] text-muted">
-                                We text a 6-digit code to confirm the number belongs to you. Applications with a
-                                verified number are reviewed first.
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2">
-                                <Button
-                                    type="button"
-                                    disabled={otpBusy || resend.active}
-                                    onClick={sendCode}
-                                >
-                                    {resend.active
-                                        ? `Resend in ${resend.seconds}s`
-                                        : otpSent
-                                          ? 'Resend code'
-                                          : 'Send code'}
-                                </Button>
-                                {otpSent ? (
-                                    <>
-                                        <Input
-                                            className="w-32"
-                                            placeholder="123456"
-                                            inputMode="numeric"
-                                            maxLength={6}
-                                            value={otpCode}
-                                            onChange={(event) =>
-                                                setOtpCode(event.target.value.replace(/[^0-9]/g, ''))
-                                            }
-                                        />
-                                        <Button
-                                            type="button"
-                                            disabled={otpBusy || otpCode.length < 4}
-                                            onClick={verifyCode}
-                                        >
-                                            Verify
-                                        </Button>
-                                    </>
-                                ) : null}
-                            </div>
-                        </>
-                    ) : null}
-                    {otpError ? <Alert tone="error">{otpError}</Alert> : null}
-                    {otpNote && !otpError ? <Alert tone="note">{otpNote}</Alert> : null}
-                </div>
+                <PhoneVerification
+                    phone={form.data.phone}
+                    onPhoneChange={(value) => form.setData('phone', value)}
+                    verifiedPhone={verifiedPhone}
+                    sendUrl={partnerPhoneSend.url()}
+                    confirmUrl={partnerPhoneConfirm.url()}
+                    onVerifiedChange={(isVerified) => {
+                        setVerified(isVerified);
+
+                        if (isVerified) {
+                            setVerifyNotice('');
+                        }
+                    }}
+                    hint="We text a 6-digit code to confirm the number belongs to you. Applications with a verified number are reviewed first."
+                />
+                {verifyNotice ? <Alert tone="error">{verifyNotice}</Alert> : null}
+
                 {upgrading ? (
                     <Field label="Email">
                         <Input value={account?.email ?? ''} readOnly disabled />

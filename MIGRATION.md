@@ -105,6 +105,7 @@ These are the differences that matter for production:
 11. **Suspended accounts are ejected** mid-session by `EnsureAccountIsActive`; suspension also blocks login.
 12. **Admin safety rails.** Admins cannot suspend or modify their own account or another admin, and cannot change partner-visible roles.
 13. **Production guards**: `DB::prohibitDestructiveCommands` in production, `URL::forceScheme('https')` plus secure session cookies, security headers, and `Model::shouldBeStrict()` outside production (which is what surfaced the bugs fixed during testing).
+14. **Disputes keep both sides honest.** A report always notifies the accused and gives them 48 hours to answer before a verdict is possible; verdicts are admin-only and turn into warnings, strikes (three suspend the account) or commission penalties. Nothing is charged automatically without review.
 
 ---
 
@@ -159,6 +160,9 @@ BOOKTRIPS_WATERMARK_TEXT="Booktrips.lk"
 # BOOKTRIPS_WATERMARK_ALPHA=100
 # BOOKTRIPS_WATERMARK_FONT=/path/to/bold.ttf
 
+# Only needed on hosts without a system CA bundle (bare Windows PHP):
+# BOOKTRIPS_CA_BUNDLE=C:/php/cacert.pem
+
 BOOKTRIPS_BANK_NAME=...          # shown to partners on the payments page
 BOOKTRIPS_BANK_ACCOUNT_NAME=...
 BOOKTRIPS_BANK_ACCOUNT_NUMBER=...
@@ -208,13 +212,16 @@ queued mail — keep it running in production.
 
 ## 9. Tests
 
-`vendor/bin/pest` (or `php artisan test --compact`) runs 80 feature tests covering:
+`vendor/bin/pest` (or `php artisan test --compact`) runs 104 feature tests covering:
 
 | File | Covers |
 | --- | --- |
 | `tests/Feature/AuthTest.php` | registration, verification mail, role mass-assignment block, weak password/duplicate email, login/logout, suspended login, signed verification, bad signature, password reset, email change |
 | `tests/Feature/PartnerApplicationTest.php` | guest applications (business + owner created, admins notified with a deep link), duplicate-email guidance, signed-in traveller upgrades on the same account, pending/approved/admin redirects, no second business per owner, unverified-phone and missing-social rejection |
 | `tests/Feature/PhoneVerificationTest.php` | number normalisation, Text.lk payload (bearer token, sender id, plain type), invalid numbers, per-phone cooldown, hourly cap, per-IP throttling, wrong-code limits, expiry, session proof |
+| `tests/Feature/DisputeTest.php` | no-show and payment reports, wrong-type/early/duplicate guards, stranger 403s, 48-hour response window, strikes, auto-suspension at three, partner penalties billed to their invoice, admin-only queue |
+| `tests/Feature/SupportTest.php` | opening a thread (admins notified), back-and-forth handover, privacy between users, resolved-thread rules, booking ownership, admin inbox |
+| `tests/Feature/AdminInsightsTest.php` | dashboard insights (finance, monthly, attention, top partners), finance summary, business and traveller history pages, access control |
 | `tests/Feature/PackageImageTest.php` | watermark job dispatched per photo, 6 MB limit enforced, watermark changes the file, switch-off behaviour |
 | `tests/Feature/CatalogTest.php` | home props, search filters, hidden packages, slug/id lookup, quote maths, guest/weekday validation, map pins, geo search |
 | `tests/Feature/BookingFlowTest.php` | verified-email requirement, server-side totals, capacity guard, partner confirm + contact redaction, commission/invoice creation, month adjustments, transition rules, cross-partner access, cancellation (partner notified), traveller decision notifications |
@@ -256,3 +263,5 @@ extensions enabled in `php.ini` (uploads use generated image fixtures).
 - Guest checkout does not exist: booking requires an account with a verified email (`auth` + `verified` middleware).
 - The watermark text, opacity and font are configurable (`BOOKTRIPS_WATERMARK*`); a TrueType font gives the crispest result — otherwise the built-in bitmap font is scaled up.
 - Partner phone verification is SMS-only. If you later add WhatsApp or email fallback, extend `PhoneVerificationService` — the codes, limits and session proof live there.
+- The frontend formatter has never been run repo-wide: `npm run check` currently reports formatting drift in ~70 files (including untouched starter files). Run `npm run check:fix` once when you are happy to take that large diff.
+- On hosts without a system CA bundle (bare Windows PHP), set `curl.cainfo` in `php.ini` or `BOOKTRIPS_CA_BUNDLE` — outbound HTTPS (SMS, address lookup) fails with cURL error 60 otherwise. TLS verification is never disabled by the app.

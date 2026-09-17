@@ -1,12 +1,17 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\AccountPhoneVerificationController;
 use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminBusinessController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminDisputeController;
 use App\Http\Controllers\Admin\AdminPackageController;
 use App\Http\Controllers\Admin\AdminPartnerController;
 use App\Http\Controllers\Admin\AdminPaymentController;
 use App\Http\Controllers\Admin\AdminReviewController;
+use App\Http\Controllers\Admin\AdminSupportController;
+use App\Http\Controllers\Admin\AdminTravellerController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\EmailChangeController;
@@ -16,6 +21,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\DisputeController;
 use App\Http\Controllers\GeoController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
@@ -32,6 +38,7 @@ use App\Http\Controllers\Partner\PartnerProfileController;
 use App\Http\Controllers\Partner\PartnerRegistrationController;
 use App\Http\Controllers\ReceiptDownloadController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SupportTicketController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -90,10 +97,10 @@ Route::post('/partners/apply', [PartnerRegistrationController::class, 'store'])
 
 // Mobile verification for partner applications (SMS one-time codes).
 Route::post('/partners/apply/phone', [PartnerPhoneVerificationController::class, 'send'])
-    ->middleware('throttle:partner-otp')
+    ->middleware('throttle:sms-otp')
     ->name('partner.phone.send');
 Route::post('/partners/apply/phone/confirm', [PartnerPhoneVerificationController::class, 'confirm'])
-    ->middleware('throttle:partner-otp-confirm')
+    ->middleware('throttle:sms-otp-confirm')
     ->name('partner.phone.confirm');
 
 Route::get('/partners/register', fn () => redirect()->route('partner.apply'))->name('partner.register.legacy');
@@ -124,6 +131,24 @@ Route::middleware(['auth', 'active'])->group(function (): void {
         ->middleware('signed')
         ->name('email.change.confirm');
 
+    // Traveller mobile verification (required before sending a booking request)
+    Route::post('/account/phone', [AccountPhoneVerificationController::class, 'send'])
+        ->middleware('throttle:sms-otp')
+        ->name('account.phone.send');
+    Route::post('/account/phone/confirm', [AccountPhoneVerificationController::class, 'confirm'])
+        ->middleware('throttle:sms-otp-confirm')
+        ->name('account.phone.confirm');
+
+    // Help & support threads
+    Route::get('/support', [SupportTicketController::class, 'index'])->name('support.index');
+    Route::post('/support', [SupportTicketController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('support.store');
+    Route::post('/support/{ticket}/reply', [SupportTicketController::class, 'reply'])
+        ->middleware('throttle:30,1')
+        ->name('support.reply');
+    Route::patch('/support/{ticket}', [SupportTicketController::class, 'status'])->name('support.status');
+
     // Account
     Route::get('/account', [AccountController::class, 'index'])->name('account.index');
     Route::put('/account/profile', [AccountController::class, 'update'])->name('account.profile');
@@ -143,6 +168,10 @@ Route::middleware(['auth', 'active'])->group(function (): void {
     Route::get('/account/bookings/{booking}', [BookingController::class, 'show'])->name('bookings.show');
     Route::post('/bookings/{booking}/cancel', [BookingController::class, 'cancel'])->name('bookings.cancel');
     Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+
+    // Reports between the two sides of a booking (both roles use the same routes).
+    Route::post('/bookings/{booking}/disputes', [DisputeController::class, 'store'])->name('disputes.store');
+    Route::post('/disputes/{dispute}/respond', [DisputeController::class, 'respond'])->name('disputes.respond');
 
     Route::get('/book/{package}', [BookingController::class, 'create'])->name('bookings.create');
     Route::post('/bookings', [BookingController::class, 'store'])
@@ -205,6 +234,8 @@ Route::middleware(['auth', 'active', 'admin'])
 
         Route::get('/partners', [AdminPartnerController::class, 'index'])->name('partners');
         Route::patch('/partners/{business}/approve', [AdminPartnerController::class, 'approve'])->name('partners.approve');
+        Route::get('/businesses/{business}', [AdminBusinessController::class, 'show'])->name('businesses.show');
+        Route::get('/travellers/{user}', [AdminTravellerController::class, 'show'])->name('travellers.show');
 
         Route::get('/listings', [AdminPackageController::class, 'index'])->name('listings');
         Route::patch('/packages/{package}', [AdminPackageController::class, 'update'])->name('packages.update');
@@ -216,4 +247,11 @@ Route::middleware(['auth', 'active', 'admin'])
         Route::patch('/receipts/{receipt}', [AdminPaymentController::class, 'updateReceipt'])->name('receipts.update');
 
         Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews');
+
+        Route::get('/disputes', [AdminDisputeController::class, 'index'])->name('disputes');
+        Route::patch('/disputes/{dispute}', [AdminDisputeController::class, 'resolve'])->name('disputes.resolve');
+
+        Route::get('/support', [AdminSupportController::class, 'index'])->name('support');
+        Route::post('/support/{ticket}/reply', [AdminSupportController::class, 'reply'])->name('support.reply');
+        Route::patch('/support/{ticket}', [AdminSupportController::class, 'status'])->name('support.status');
     });

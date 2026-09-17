@@ -74,6 +74,16 @@ class AdminPaymentController extends Controller
             'commissionRate' => config('booktrips.commission_rate'),
             'invoices' => $invoices,
             'receipts' => $receipts,
+            'summary' => [
+                'billed_lkr' => (int) Invoice::query()->sum('amount_lkr'),
+                'collected_lkr' => (int) Invoice::query()->where('status', InvoiceStatus::Paid)->sum('amount_lkr'),
+                'outstanding_lkr' => (int) Invoice::query()->where('status', '!=', InvoiceStatus::Paid)->sum('amount_lkr'),
+                'overdue_lkr' => (int) Invoice::query()
+                    ->where('status', '!=', InvoiceStatus::Paid)
+                    ->where('created_at', '<', now()->startOfMonth())
+                    ->sum('amount_lkr'),
+                'pending_receipts' => (int) Receipt::query()->where('status', ReceiptStatus::Pending)->count(),
+            ],
         ]);
     }
 

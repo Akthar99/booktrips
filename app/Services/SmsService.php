@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -31,32 +32,65 @@ class SmsService
             return true;
         }
 
+        $sender = (string) config('booktrips.sms.sender_id');
+
+        if (mb_strlen($sender) > 11) {
+            Log::warning("Text.lk sender_id \"{$sender}\" is longer than 11 characters and will be rejected.", [
+                'hint' => 'Set TEXTLK_SENDER_ID to a registered 11-character sender id.',
+            ]);
+        }
+
         try {
-            $response = Http::withToken((string) config('booktrips.sms.api_key'))
-                ->acceptJson()
-                ->asJson()
-                ->timeout(12)
+            $response = $this->client()
                 ->post(rtrim((string) config('booktrips.sms.base_url'), '/').'/sms/send', [
                     'recipient' => $recipient,
-                    'sender_id' => (string) config('booktrips.sms.sender_id'),
+                    'sender_id' => $sender,
                     'type' => 'plain',
                     'message' => $message,
                 ]);
         } catch (Throwable $exception) {
-            report($exception);
-
-            return false;
-        }
-
-        if (! $response->successful()) {
-            Log::warning('SMS gateway error', [
-                'status' => $response->status(),
-                'body' => $response->json() ?? $response->body(),
+            // Almost always a TLS/DNS problem on the host: log the precise reason
+            // (a missing CA bundle shows up here) without leaking it to the user.
+            Log::error('SMS could not reach Text.lk: '.$exception->getMessage(), [
+                'recipient' => $recipient,
+                'hint' => 'On Windows hosts, set curl.cainfo in php.ini or BOOKTRIPS_CA_BUNDLE to a cacert.pem path.',
             ]);
 
             return false;
         }
 
-        return ($response->json('status') ?? 'success') === 'success';
+        $payload = $response->json();
+
+        if (! $response->successful() || (($payload['status'] ?? 'success') !== 'success')) {
+            Log::warning('Text.lk rejected the SMS', [
+                'status' => $response->status(),
+                'response' => $payload ?? $response->body(),
+                'recipient' => $recipient,
+                'sender_id' => $sender,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Authenticated JSON client, optionally pinned to an explicit CA bundle.
+     */
+    private function client(): PendingRequest
+    {
+        $request = Http::withToken((string) config('booktrips.sms.api_key'))
+            ->acceptJson()
+            ->asJson()
+            ->timeout(12);
+
+        $bundle = config('booktrips.http.ca_bundle');
+
+        if (is_string($bundle) && $bundle !== '') {
+            $request = $request->withOptions(['verify' => $bundle]);
+        }
+
+        return $request;
     }
 }

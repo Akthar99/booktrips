@@ -27,6 +27,7 @@ const COLUMNS: Array<{ heading: string; links: Array<[string, string]> }> = [
             ['Log in', '/login'],
             ['Sign up', '/register'],
             ['My bookings', '/account/bookings'],
+            ['Help & support', '/support'],
         ],
     },
 ];

@@ -16,7 +16,7 @@ class PhoneVerificationService
 {
     public const PURPOSE_PARTNER = 'partner_application';
 
-    private const SESSION_KEY = 'booktrips.partner_phone';
+    public const PURPOSE_BOOKING = 'booking';
 
     public function __construct(private readonly SmsService $sms) {}
 
@@ -160,17 +160,17 @@ class PhoneVerificationService
 
         $verification->forceFill(['consumed_at' => now()])->save();
 
-        $this->rememberSession($normalised);
+        $this->rememberSession($normalised, $purpose);
 
         return ['ok' => true, 'error' => null, 'phone' => $normalised];
     }
 
     /**
-     * The number verified in this session, if the proof is still fresh.
+     * The number verified in this session for a purpose, if the proof is still fresh.
      */
-    public function sessionVerifiedPhone(): ?string
+    public function sessionVerifiedPhone(string $purpose = self::PURPOSE_PARTNER): ?string
     {
-        $session = session(self::SESSION_KEY);
+        $session = session($this->sessionKey($purpose));
 
         if (! is_array($session) || ! isset($session['phone'], $session['at'])) {
             return null;
@@ -179,7 +179,7 @@ class PhoneVerificationService
         $minutes = (int) config('booktrips.sms.otp.session_minutes', 30);
 
         if (now()->getTimestamp() - (int) $session['at'] > $minutes * 60) {
-            $this->forgetSession();
+            $this->forgetSession($purpose);
 
             return null;
         }
@@ -187,14 +187,19 @@ class PhoneVerificationService
         return (string) $session['phone'];
     }
 
-    public function forgetSession(): void
+    public function forgetSession(string $purpose = self::PURPOSE_PARTNER): void
     {
-        session()->forget(self::SESSION_KEY);
+        session()->forget($this->sessionKey($purpose));
     }
 
-    private function rememberSession(string $phone): void
+    private function rememberSession(string $phone, string $purpose): void
     {
-        session([self::SESSION_KEY => ['phone' => $phone, 'at' => now()->timestamp]]);
+        session([$this->sessionKey($purpose) => ['phone' => $phone, 'at' => now()->getTimestamp()]]);
+    }
+
+    private function sessionKey(string $purpose): string
+    {
+        return 'booktrips.phone.'.$purpose;
     }
 
     /**

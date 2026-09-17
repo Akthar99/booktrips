@@ -11,12 +11,28 @@ use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\User;
 use App\Notifications\ActivityNotification;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     Mail::fake();
     Notification::fake();
+
+    config([
+        'booktrips.sms.api_key' => 'test-key',
+        'booktrips.sms.sender_id' => 'BookTrips',
+    ]);
+
+    $this->otpCode = null;
+
+    Http::fake(function ($request) {
+        if (preg_match('/code is (\d{6})/', (string) $request['message'], $matches)) {
+            $this->otpCode = $matches[1];
+        }
+
+        return Http::response(['status' => 'success', 'data' => 'queued']);
+    });
 
     $this->partner = User::factory()->partner()->create();
     $this->business = Business::factory()->for($this->partner, 'user')->create(['approved' => true]);
@@ -45,6 +61,15 @@ function bookingPayload(Package $package, array $overrides = []): array
     ], $overrides);
 }
 
+/**
+ * Walk the booking phone check exactly like the form does.
+ */
+function verifyBookingPhone(string $phone = '0771234567'): void
+{
+    test()->post('/account/phone', ['phone' => $phone])->assertOk();
+    test()->post('/account/phone/confirm', ['phone' => $phone, 'code' => test()->otpCode])->assertOk();
+}
+
 it('requires a verified email to book', function () {
     $traveller = User::factory()->unverified()->create();
 
@@ -55,8 +80,29 @@ it('requires a verified email to book', function () {
     expect(Booking::query()->count())->toBe(0);
 });
 
+it('requires a verified mobile number before a booking request is sent', function () {
+    $this->actingAs($this->traveller)
+        ->post('/bookings', bookingPayload($this->package))
+        ->assertSessionHasErrors('guest_phone');
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('rejects a booking when a different number was verified', function () {
+    $this->actingAs($this->traveller);
+    verifyBookingPhone('0771234567');
+
+    $this->post('/bookings', bookingPayload($this->package, ['guest_phone' => '0719999999']))
+        ->assertSessionHasErrors('guest_phone');
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
 it('recomputes totals on the server and ignores client money fields', function () {
-    $response = $this->actingAs($this->traveller)->post('/bookings', bookingPayload($this->package, [
+    $this->actingAs($this->traveller);
+    verifyBookingPhone();
+
+    $response = $this->post('/bookings', bookingPayload($this->package, [
         'total_lkr' => 1,
         'base_total_lkr' => 1,
         'status' => 'completed',
@@ -87,20 +133,23 @@ it('blocks overbooking across overlapping dates', function () {
         'guests' => 4,
     ]);
 
-    $this->actingAs($this->traveller)
-        ->post('/bookings', bookingPayload($this->package, ['guests' => 1]))
+    $this->actingAs($this->traveller);
+    verifyBookingPhone();
+
+    $this->post('/bookings', bookingPayload($this->package, ['guests' => 1]))
         ->assertSessionHasErrors('check_in');
 
     expect(Booking::query()->count())->toBe(1);
 });
 
 it('validates guest range and dates', function () {
-    $this->actingAs($this->traveller)
-        ->post('/bookings', bookingPayload($this->package, ['guests' => 9]))
+    $this->actingAs($this->traveller);
+    verifyBookingPhone();
+
+    $this->post('/bookings', bookingPayload($this->package, ['guests' => 9]))
         ->assertSessionHasErrors('guests');
 
-    $this->actingAs($this->traveller)
-        ->post('/bookings', bookingPayload($this->package, ['check_in' => '2030-02-05', 'check_out' => '2030-02-01']))
+    $this->post('/bookings', bookingPayload($this->package, ['check_in' => '2030-02-05', 'check_out' => '2030-02-01']))
         ->assertSessionHasErrors('check_out');
 });
 

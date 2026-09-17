@@ -1,5 +1,6 @@
 import { Link, useForm } from '@inertiajs/react';
 import Alert from '@/components/booktrips/alert';
+import DisputePanel, { type DisputeData } from '@/components/booktrips/dispute-panel';
 import { Field, Input, Textarea } from '@/components/booktrips/field';
 import StarRating from '@/components/booktrips/star-rating';
 import StatusBadge from '@/components/booktrips/status-badge';
@@ -8,9 +9,14 @@ import { lkr } from '@/lib/booktrips';
 import type { BookingData, SharedProps } from '@/types/booktrips';
 import type { InertiaComponent } from '@/types/inertia';
 
-type BookingShowProps = { booking: BookingData };
+type BookingShowProps = {
+    booking: BookingData;
+    disputes: DisputeData[];
+    reportTypes: Array<{ value: string; label: string; blurb: string }>;
+    canReport: boolean;
+};
 
-const BookingShow: InertiaComponent<BookingShowProps> = ({ booking }) => {
+const BookingShow: InertiaComponent<BookingShowProps> = ({ booking, disputes, reportTypes, canReport }) => {
     const reviewForm = useForm({
         booking_id: booking.id,
         rating: 5,
@@ -119,6 +125,13 @@ const BookingShow: InertiaComponent<BookingShowProps> = ({ booking }) => {
                         View package
                     </Link>
                 </div>
+
+                <DisputePanel
+                    bookingId={booking.id}
+                    disputes={disputes}
+                    reportTypes={reportTypes}
+                    canReport={canReport}
+                />
             </div>
         </div>
     );

@@ -23,9 +23,17 @@ class GeoSearchService
 
         return Cache::remember('geo:'.md5(mb_strtolower($query)), now()->addMinutes(30), function () use ($query): array {
             try {
-                $response = Http::withHeaders([
+                $request = Http::withHeaders([
                     'User-Agent' => 'BookTrips/1.0 (booktrips.lk)',
-                ])->timeout(8)->get('https://nominatim.openstreetmap.org/search', [
+                ])->timeout(8);
+
+                $bundle = config('booktrips.http.ca_bundle');
+
+                if (is_string($bundle) && $bundle !== '') {
+                    $request = $request->withOptions(['verify' => $bundle]);
+                }
+
+                $response = $request->get('https://nominatim.openstreetmap.org/search', [
                     'format' => 'json',
                     'addressdetails' => 1,
                     'limit' => 6,

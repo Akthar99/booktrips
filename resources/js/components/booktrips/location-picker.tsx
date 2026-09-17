@@ -61,7 +61,14 @@ export default function LocationPicker({
 
     const pinned = value.lat !== null && value.lng !== null && (value.lat !== 0 || value.lng !== 0);
     const pin = pinned
-        ? [{ lat: value.lat as number, lng: value.lng as number, title: value.location, location: value.address }]
+        ? [
+              {
+                  lat: value.lat as number,
+                  lng: value.lng as number,
+                  title: value.location || 'Your pin',
+                  location: `${value.lat}, ${value.lng}`,
+              },
+          ]
         : [];
 
     return (

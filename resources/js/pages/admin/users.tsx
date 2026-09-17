@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { update as updateUser } from '@/actions/App/Http/Controllers/Admin/AdminUserController';
 import ConfirmDialog from '@/components/booktrips/confirm-dialog';
 import { Input, Select } from '@/components/booktrips/field';
@@ -7,6 +7,7 @@ import Pagination from '@/components/booktrips/pagination';
 import StatusBadge from '@/components/booktrips/status-badge';
 import Tabs from '@/components/booktrips/tabs';
 import { withAppLayout } from '@/layouts/app-layout';
+import { ADMIN_TABS } from '@/lib/admin-tabs';
 import type { Paginated } from '@/types/booktrips';
 import type { InertiaComponent } from '@/types/inertia';
 
@@ -59,17 +60,7 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">Super admin</h1>
-            <Tabs
-                items={[
-                    { label: 'Overview', href: '/admin', exact: true },
-                    { label: 'Users', href: '/admin/users' },
-                    { label: 'Partners', href: '/admin/partners' },
-                    { label: 'Listings', href: '/admin/listings' },
-                    { label: 'Bookings', href: '/admin/bookings' },
-                    { label: 'Finance', href: '/admin/payments' },
-                    { label: 'Reviews', href: '/admin/reviews' },
-                ]}
-            />
+            <Tabs items={ADMIN_TABS} />
             <h2 className="mb-3 text-2xl">Users</h2>
             <form
                 className="my-3 flex flex-wrap items-center gap-2.5"
@@ -139,6 +130,12 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
                                     <StatusBadge status={user.active ? 'active' : 'suspended'} />
                                 </td>
                                 <td className="px-3.5 py-3 text-right whitespace-nowrap">
+                                    <Link
+                                        className="mr-3 text-[13px] font-bold text-brand-800"
+                                        href={`/admin/travellers/${user.id}`}
+                                    >
+                                        History
+                                    </Link>
                                     {!user.email_verified ? (
                                         <button
                                             type="button"

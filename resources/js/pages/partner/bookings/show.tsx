@@ -3,13 +3,19 @@ import { Link, router } from '@inertiajs/react';
 import { updateStatus as partnerBookingStatus } from '@/actions/App/Http/Controllers/Partner/PartnerBookingController';
 import Alert from '@/components/booktrips/alert';
 import ConfirmDialog from '@/components/booktrips/confirm-dialog';
+import DisputePanel, { type DisputeData } from '@/components/booktrips/dispute-panel';
 import StatusBadge from '@/components/booktrips/status-badge';
 import { withAppLayout } from '@/layouts/app-layout';
 import { lkr } from '@/lib/booktrips';
 import type { BookingData } from '@/types/booktrips';
 import type { InertiaComponent } from '@/types/inertia';
 
-type PartnerBookingProps = { booking: BookingData };
+type PartnerBookingProps = {
+    booking: BookingData;
+    disputes: DisputeData[];
+    reportTypes: Array<{ value: string; label: string; blurb: string }>;
+    canReport: boolean;
+};
 
 const ACTION_COPY = {
     confirmed: {
@@ -34,7 +40,7 @@ const ACTION_COPY = {
 
 type PendingAction = keyof typeof ACTION_COPY;
 
-const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking }) => {
+const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking, disputes, reportTypes, canReport }) => {
     const [pending, setPending] = useState<PendingAction | null>(null);
     const [busy, setBusy] = useState(false);
     const open = booking.status === 'confirmed' || booking.status === 'completed';
@@ -130,6 +136,13 @@ const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking }) => {
                 busy={busy}
                 onConfirm={() => pending && apply(pending)}
                 onCancel={() => setPending(null)}
+            />
+
+            <DisputePanel
+                bookingId={booking.id}
+                disputes={disputes}
+                reportTypes={reportTypes}
+                canReport={canReport}
             />
         </div>
     );

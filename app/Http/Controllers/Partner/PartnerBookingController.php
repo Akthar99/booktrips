@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Partner;
 
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\DisputeController;
 use App\Http\Requests\Partner\BookingStatusRequest;
 use App\Models\Booking;
+use App\Models\Dispute;
 use App\Presenters\BookingPresenter;
 use App\Services\BookingService;
+use App\Services\DisputeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -62,14 +65,22 @@ class PartnerBookingController extends Controller
     /**
      * A single reservation with contact details when the booking is confirmed.
      */
-    public function show(Booking $booking): Response
+    public function show(Request $request, Booking $booking): Response
     {
         $this->authorize('manageAsPartner', $booking);
 
         $booking->load(['package.business', 'user']);
 
+        $disputes = app(DisputeService::class);
+        $viewer = $request->user();
+
         return Inertia::render('partner/bookings/show', [
             'booking' => $this->presenter->forPartner($booking),
+            'disputes' => $booking->disputes()->latest()->get()
+                ->map(fn (Dispute $dispute): array => $disputes->forParty($dispute, $viewer))
+                ->all(),
+            'reportTypes' => DisputeController::typesFor(true),
+            'canReport' => $disputes->canReport($viewer, $booking),
         ]);
     }
 

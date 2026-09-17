@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Booking\StoreBookingRequest;
 use App\Models\Booking;
+use App\Models\Dispute;
 use App\Models\Package;
 use App\Presenters\BookingPresenter;
 use App\Presenters\CatalogPresenter;
 use App\Services\BookingService;
+use App\Services\DisputeService;
+use App\Services\PhoneVerificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -52,20 +55,29 @@ class BookingController extends Controller
 
         return Inertia::render('bookings/create', [
             'package' => $this->catalog->packageDetail($package),
+            'verifiedPhone' => app(PhoneVerificationService::class)->sessionVerifiedPhone(PhoneVerificationService::PURPOSE_BOOKING),
         ]);
     }
 
     /**
      * A single booking for its owner (admins can open any booking).
      */
-    public function show(Booking $booking): Response
+    public function show(Request $request, Booking $booking): Response
     {
         $this->authorize('view', $booking);
 
         $booking->load(['package.business', 'user', 'review']);
 
+        $disputes = app(DisputeService::class);
+        $viewer = $request->user();
+
         return Inertia::render('bookings/show', [
             'booking' => $this->presenter->forGuest($booking, $booking->review),
+            'disputes' => $booking->disputes()->latest()->get()
+                ->map(fn (Dispute $dispute): array => $disputes->forParty($dispute, $viewer))
+                ->all(),
+            'reportTypes' => DisputeController::typesFor(false),
+            'canReport' => $disputes->canReport($viewer, $booking),
         ]);
     }
 

@@ -124,6 +124,7 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
     }
 
     const MAX_PHOTO_MB = 6;
+    const MAX_PHOTOS = 8;
 
     async function onFiles(event: React.ChangeEvent<HTMLInputElement>) {
         const files = Array.from(event.target.files ?? []).slice(0, 8);
@@ -514,17 +515,50 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                 </div>
 
                 <div className="mb-3 flex flex-col gap-1.5">
-                    <span className="text-xs font-bold tracking-wide text-muted uppercase">Photos</span>
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold tracking-wide text-muted uppercase">Photos</span>
+                        <span
+                            className={cn(
+                                'text-xs font-bold',
+                                images.length >= 5 ? 'text-brand-800' : 'text-warn',
+                            )}
+                        >
+                            {images.length} of {8} photos
+                        </span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-dark">
+                        <div
+                            className={cn(
+                                'h-full rounded-full transition-all',
+                                images.length >= 5 ? 'bg-brand-700' : 'bg-warn',
+                            )}
+                            style={{ width: `${Math.min(100, (images.length / 8) * 100)}%` }}
+                        />
+                    </div>
                     <em className="text-xs text-muted not-italic">
                         Up to 8 photos, {MAX_PHOTO_MB} MB each. We add a subtle Booktrips.lk watermark after
                         upload, so use photos you are happy to brand.
                     </em>
+                    {images.length < 4 ? (
+                        <p className="rounded-lg bg-orange-50 px-2.5 py-2 text-[12px] font-semibold text-warn">
+                            Listings with 5 or more photos get noticeably more bookings. Aim for a mix of
+                            the place, the view, food and what guests actually do — at least 4 to start.
+                        </p>
+                    ) : images.length < 5 ? (
+                        <p className="text-[12px] font-semibold text-brand-800">
+                            Nice — one more photo and you are in the sweet spot.
+                        </p>
+                    ) : (
+                        <p className="text-[12px] font-semibold text-brand-800">
+                            Great coverage. This listing will stand out in search.
+                        </p>
+                    )}
                     <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
                         multiple
                         onChange={onFiles}
-                        className="text-sm"
+                        className="mt-1 text-sm"
                     />
                     {uploading ? <em className="text-xs text-muted not-italic">Uploading…</em> : null}
                     <div className="mt-2.5 flex flex-wrap gap-2">

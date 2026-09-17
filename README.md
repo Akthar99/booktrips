@@ -32,8 +32,13 @@ MAIL_MAILER=smtp               # or "log" locally to skip a real mailbox
 MAIL_HOST=... MAIL_PORT=... MAIL_USERNAME=... MAIL_PASSWORD=... MAIL_FROM_ADDRESS=...
 
 TEXTLK_API_KEY=                # leave empty to log OTP codes instead of sending SMS
-TEXTLK_SENDER_ID=Booktrips.lk
+TEXTLK_SENDER_ID=BookTrips     # alphanumeric sender ids are limited to 11 characters
+# BOOKTRIPS_CA_BUNDLE=C:/php/cacert.pem   # only needed when PHP has no curl.cainfo
 ```
+
+> **Windows hosts:** if SMS fails with a cURL/SSL error, PHP has no root certificates. Either set
+> `curl.cainfo` in `php.ini`, or download <https://curl.se/ca/cacert.pem> and point
+> `BOOKTRIPS_CA_BUNDLE` at it. BookTrips keeps TLS verification on either way.
 
 > If mail is not configured, set `MAIL_MAILER=log`. Verification and reset links then appear in
 > `storage/logs/laravel.log` instead of an inbox. Keep `.env` out of version control — it holds
@@ -95,8 +100,10 @@ Only **active** packages appear anywhere publicly.
 1. **Register** — `/register` (name, email, phone, password). A verification email is sent.
 2. **Verify email** — `/verify-email` shows a notice with a resend button until you click the link.
    Booking is blocked until then.
-3. **Find a trip** — browse, filter or use the map, then open a package.
-4. **Book it** — press **Book** on the package page (goes to `/book/{package}`):
+3. **Verify your mobile** — on the booking form, press *Send code*, key in the SMS code and press
+   *Verify*. Hosts need a reachable number, and verified numbers carry more weight in any dispute.
+4. **Find a trip** — browse, filter or use the map, then open a package.
+5. **Book it** — press **Book** on the package page (goes to `/book/{package}`):
    - check-in / check-out dates (validated against the host's running days and availability),
    - number of guests (validated against the package's min/max),
    - the guest name, phone and any notes for the host,
@@ -181,6 +188,13 @@ invoice number as the reference, upload the receipt, and a super admin marks it 
 | Bookings | `/admin/bookings` | Every booking across all partners; override status when a host is unresponsive. Marking one **completed** raises the correct commission automatically |
 | Payments | `/admin/payments` | All commission invoices and uploaded receipts (you are notified when one arrives); **confirm** a receipt (invoice → `paid`) or **reject** it (invoice → back to `open` so the partner can upload again) |
 | Reviews | `/admin/reviews` | Read-only view of all published reviews, newest first |
+| Reports | `/admin/disputes` | Every traveller ↔ partner report with both accounts side by side; decide fault, penalty and (for partner faults) a billed amount once the response window closes |
+| Support | `/admin/support` | The support inbox: reply to users, mark threads resolved, see who is waiting on BookTrips |
+
+The **Overview** tab adds this-month numbers, six months of GMV, billed vs collected commission,
+top partners and a "needs attention" list (reports ready for a verdict, unread support, receipts,
+applications, escalations). Click a business or traveller anywhere to open their **history page**:
+profile, strikes, bookings, invoices and receipts, reports and support threads.
 
 Escalations: any booking still `requested` after 24 hours is flagged, and admins are notified by
 the scheduled `booktrips:escalate-stale-bookings` job (see below).
@@ -197,6 +211,35 @@ those two.
 it back to `open`.
 
 **Receipt:** `pending` → `confirmed` / `rejected`.
+
+---
+
+## 7a. Reports & disputes (both sides protected)
+
+Real life happens: guests do not turn up, hosts claim they were never paid. Every booking page has a
+**Reports & disputes** panel where either side can raise the issue:
+
+1. **The report** — a partner reports a no-show after the trip date, or a traveller reports
+   "paid but denied" / "service not delivered". The reporter writes a headline and details.
+2. **The response window** — the accused party is notified by email and in-app, and gets **48 hours**
+   to tell their side. Nothing is decided before they answer, or before the window closes.
+3. **The verdict** — a super admin reads both accounts in **Reports** in the console and rules:
+   traveller at fault, partner at fault, or nobody at fault, with a penalty:
+   - *warning* — noted on the account,
+   - *strike* — recorded against the traveller or the business; **3 strikes suspends the account**,
+   - *suspend* — immediate,
+   - for partner faults an amount can be billed, which lands as a penalty line on their next
+     commission invoice.
+4. **Outcome** — both sides are notified in-app and by email; every report stays on the booking and on
+   the traveller/business history pages.
+
+---
+
+## 7b. Help & support
+
+**Help & support** in the header menu (or the footer) opens a support inbox: open a request with a
+subject, category and message, then reply back and forth with the BookTrips team. Staff replies also
+arrive by email, and unanswered threads show up in the admin console under **Support**.
 
 ---
 
