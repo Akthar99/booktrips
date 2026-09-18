@@ -145,6 +145,7 @@ class PackageController extends Controller
         return Inertia::render('packages/show', [
             'package' => $this->presenter->packageDetail($model),
             'reviews' => $reviews,
+            'seo' => $this->presenter->packageSeo($model),
         ]);
     }
 

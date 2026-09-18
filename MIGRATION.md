@@ -202,17 +202,20 @@ php artisan schedule:work
 * * * * * cd /path-to-app && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Scheduled job: `booktrips:escalate-stale-bookings` every five minutes (`withoutOverlapping`),
-which flags booking requests unanswered for 24 h, notifies admins and re-nudges the partner.
+Scheduled jobs: `booktrips:escalate-stale-bookings` every five minutes (`withoutOverlapping`),
+which flags booking requests unanswered for 24 h, notifies admins and re-nudges the partner, and
+`booktrips:sitemap:generate` nightly at 03:30 which rebuilds `public/sitemap.xml` from the active
+catalogue.
 
-The same worker also processes `WatermarkPackageImage` jobs (one per uploaded package photo) and all
-queued mail — keep it running in production.
+The worker processes all queued mail — keep it running in production. Package photos are
+watermarked inline during the upload (before they are stored, S3 included), so they never wait
+on the worker.
 
 ---
 
 ## 9. Tests
 
-`vendor/bin/pest` (or `php artisan test --compact`) runs 104 feature tests covering:
+`vendor/bin/pest` (or `php artisan test --compact`) runs 123 feature tests covering:
 
 | File | Covers |
 | --- | --- |

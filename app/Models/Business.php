@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Enums\BusinessType;
+use App\Services\MediaUrl;
 use Carbon\CarbonImmutable;
 use Database\Factories\BusinessFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,6 +58,20 @@ class Business extends Model
             'approved' => 'boolean',
             'phone_verified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Cover images resolve to browsable URLs (legacy local paths included).
+     *
+     * @return Attribute<string|null, string|null>
+     */
+    protected function coverImage(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): ?string => $value === null || $value === ''
+                ? null
+                : app(MediaUrl::class)->url($value),
+        );
     }
 
     /**

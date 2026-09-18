@@ -124,12 +124,52 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
     }
 
     const MAX_PHOTO_MB = 6;
-    const MAX_PHOTOS = 8;
+    const MAX_PHOTOS = 25;
+    const MAX_BATCH_MB = 12;
+
+    /**
+     * Photos are uploaded in small batches so a 25-photo package stays under
+     * PHP's post_max_size, each photo appears as soon as it lands, and the
+     * watermark pass per request stays short.
+     */
+    function uploadBatches(files: File[]): File[][] {
+        const batches: File[][] = [];
+        let batch: File[] = [];
+        let size = 0;
+
+        for (const file of files) {
+            if (batch.length >= 6 || size + file.size > MAX_BATCH_MB * 1024 * 1024) {
+                if (batch.length) {
+                    batches.push(batch);
+                }
+
+                batch = [];
+                size = 0;
+            }
+
+            batch.push(file);
+            size += file.size;
+        }
+
+        if (batch.length) {
+            batches.push(batch);
+        }
+
+        return batches;
+    }
 
     async function onFiles(event: React.ChangeEvent<HTMLInputElement>) {
-        const files = Array.from(event.target.files ?? []).slice(0, 8);
+        const selected = Array.from(event.target.files ?? []);
+        const remaining = MAX_PHOTOS - (form.data.images?.length ?? 0);
+        const files = selected.slice(0, Math.max(remaining, 0));
+
+        event.target.value = '';
 
         if (!files.length) {
+            if (selected.length) {
+                setUploadError(`You can have ${MAX_PHOTOS} photos per package at most.`);
+            }
+
             return;
         }
 
@@ -137,7 +177,6 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
 
         if (tooBig) {
             setUploadError(`${tooBig.name} is larger than ${MAX_PHOTO_MB} MB. Please resize it and try again.`);
-            event.target.value = '';
 
             return;
         }
@@ -145,44 +184,48 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
         setUploading(true);
         setUploadError('');
 
-        const body = new FormData();
-        files.forEach((file) => body.append('images[]', file));
+        const appendImages = (urls: string[]) =>
+            form.setData((data) => ({ ...data, images: [...(data.images ?? []), ...urls] }));
 
         try {
-            const response = await fetch(imageStore.url(), {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': decodeURIComponent(
-                        document.cookie
-                            .split('; ')
-                            .find((row) => row.startsWith('XSRF-TOKEN='))
-                            ?.split('=')[1] ?? '',
-                    ),
-                },
-                body,
-            });
+            for (const batch of uploadBatches(files)) {
+                const body = new FormData();
+                batch.forEach((file) => body.append('images[]', file));
 
-            const data = (await response.json().catch(() => ({}))) as {
-                images?: string[];
-                message?: string;
-                errors?: Record<string, string[]>;
-            };
+                const response = await fetch(imageStore.url(), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-XSRF-TOKEN': decodeURIComponent(
+                            document.cookie
+                                .split('; ')
+                                .find((row) => row.startsWith('XSRF-TOKEN='))
+                                ?.split('=')[1] ?? '',
+                        ),
+                    },
+                    body,
+                });
 
-            if (!response.ok) {
-                setUploadError(data.message ?? Object.values(data.errors ?? {}).flat()[0] ?? 'Upload failed.');
+                const data = (await response.json().catch(() => ({}))) as {
+                    images?: string[];
+                    message?: string;
+                    errors?: Record<string, string[]>;
+                };
 
-                return;
+                if (!response.ok) {
+                    setUploadError(data.message ?? Object.values(data.errors ?? {}).flat()[0] ?? 'Upload failed.');
+
+                    break;
+                }
+
+                appendImages(data.images ?? []);
             }
-
-            set('images', [...form.data.images, ...(data.images ?? [])]);
         } catch {
             setUploadError('Upload failed. Please try again.');
         } finally {
             setUploading(false);
-            event.target.value = '';
         }
     }
 
@@ -523,7 +566,7 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                                 images.length >= 5 ? 'text-brand-800' : 'text-warn',
                             )}
                         >
-                            {images.length} of {8} photos
+                            {images.length} of {MAX_PHOTOS} photos
                         </span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-dark">
@@ -532,12 +575,12 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                                 'h-full rounded-full transition-all',
                                 images.length >= 5 ? 'bg-brand-700' : 'bg-warn',
                             )}
-                            style={{ width: `${Math.min(100, (images.length / 8) * 100)}%` }}
+                            style={{ width: `${Math.min(100, (images.length / MAX_PHOTOS) * 100)}%` }}
                         />
                     </div>
                     <em className="text-xs text-muted not-italic">
-                        Up to 8 photos, {MAX_PHOTO_MB} MB each. We add a subtle Booktrips.lk watermark after
-                        upload, so use photos you are happy to brand.
+                        Up to {MAX_PHOTOS} photos, {MAX_PHOTO_MB} MB each. Each photo is watermarked before
+                        it is stored, so use photos you are happy to brand.
                     </em>
                     {images.length < 4 ? (
                         <p className="rounded-lg bg-orange-50 px-2.5 py-2 text-[12px] font-semibold text-warn">

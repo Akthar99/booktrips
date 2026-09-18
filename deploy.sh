@@ -34,6 +34,9 @@ php artisan migrate --force
 echo "==> Caching config, routes and views"
 php artisan optimize
 
+echo "==> Rebuilding the sitemap"
+php artisan booktrips:sitemap:generate
+
 echo "==> Restarting the SSR server and queue workers"
 php artisan inertia:stop-ssr || true
 php artisan queue:restart || true

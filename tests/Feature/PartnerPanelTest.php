@@ -163,7 +163,7 @@ it('uploads package photos to the public disk and rejects other files', function
 
     $url = $response->json('images.0');
 
-    expect($url)->toStartWith('/storage/packages/');
+    expect($url)->toContain("/packages/{$this->business->id}/");
 
     $this->actingAs($this->partner)->post('/partners/images', [
         'images' => [UploadedFile::fake()->create('notes.pdf', 10, 'application/pdf')],

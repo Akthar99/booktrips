@@ -7,6 +7,7 @@ use App\Http\Requests\Partner\StorePackageRequest;
 use App\Http\Requests\Partner\UpdatePackageRequest;
 use App\Models\Business;
 use App\Models\Package;
+use App\Services\MediaUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,6 +16,8 @@ use Inertia\Response;
 
 class PartnerPackageController extends Controller
 {
+    public function __construct(private readonly MediaUrl $media) {}
+
     /**
      * Show the create-package form.
      */
@@ -67,7 +70,12 @@ class PartnerPackageController extends Controller
     {
         $this->authorize('update', $package);
 
+        $before = $package->images ?? [];
+
         $package->fill($this->attributes($request, $request->user()->business, $package))->save();
+
+        // Photos dropped in the editor should not linger on S3/local disk.
+        $this->media->deleteRemoved($before, $package->images ?? []);
 
         return to_route('partner.dashboard')->with('success', 'Package saved.');
     }

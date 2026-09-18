@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('booktrips:escalate-stale-bookings')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('booktrips:sitemap:generate')
+    ->dailyAt('03:30')
+    ->withoutOverlapping();

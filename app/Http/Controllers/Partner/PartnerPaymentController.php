@@ -75,7 +75,7 @@ class PartnerPaymentController extends Controller
         }
 
         $file = $request->file('file');
-        $path = $file->store("receipts/{$business->id}", 'local');
+        $path = $file->store("receipts/{$business->id}", (string) config('booktrips.storage.receipts_disk', 'local'));
 
         Receipt::create([
             'invoice_id' => $invoice->id,

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Check, Clock, MapPin, Users } from 'lucide-react';
 import { show as packageShow, quote as quoteRoute } from '@/actions/App/Http/Controllers/PackageController';
 import Alert from '@/components/booktrips/alert';
@@ -22,14 +22,22 @@ type Quote = {
     total_lkr: number;
 };
 
+type SeoData = {
+    title: string;
+    description: string;
+    canonical: string;
+    image: string | null;
+};
+
 type PackageShowProps = {
     package: PackageDetailData;
     reviews: ReviewData[];
+    seo: SeoData;
 };
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1500530855697-b816dceb13d4?w=1400';
 
-const PackageShow: InertiaComponent<PackageShowProps> = ({ package: pkg, reviews }) => {
+const PackageShow: InertiaComponent<PackageShowProps> = ({ package: pkg, reviews, seo }) => {
     const page = usePage<SharedProps>();
     const user = page.props.auth.user;
 
@@ -109,6 +117,16 @@ const PackageShow: InertiaComponent<PackageShowProps> = ({ package: pkg, reviews
 
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-6 pb-16">
+            <Head title={seo.title}>
+                <meta head-key="description" name="description" content={seo.description} />
+                <link head-key="canonical" rel="canonical" href={seo.canonical} />
+                <meta head-key="og:title" property="og:title" content={seo.title} />
+                <meta head-key="og:description" property="og:description" content={seo.description} />
+                <meta head-key="og:url" property="og:url" content={seo.canonical} />
+                <meta head-key="og:type" property="og:type" content="website" />
+                <meta head-key="twitter:card" name="twitter:card" content="summary_large_image" />
+                {seo.image ? <meta head-key="og:image" property="og:image" content={seo.image} /> : null}
+            </Head>
             <div className="mb-3.5 text-[13px] text-muted">
                 <Link href="/">Home</Link> ·{' '}
                 <Link href={`/search?category=${pkg.category}`}>{CATEGORY_LABELS[pkg.category]}</Link> ·{' '}

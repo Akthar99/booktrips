@@ -1,150 +1,123 @@
-# Migrating storage to AWS S3
+# File storage on AWS S3
 
-This app stores two kinds of files on the server's local disk:
+Partner photos and payment receipts live on S3 once `AWS_BUCKET` is set:
 
-| What | Disk | Path | Served via |
+| What | Disk | Key prefix | Served via |
 | --- | --- | --- | --- |
-| Package photos | `public` | `storage/app/public/packages/{businessId}/...` | `/storage/...` symlink (`php artisan storage:link`) |
-| Payment receipts | `local` | `storage/app/private/receipts/{businessId}/...` | `ReceiptDownloadController` (auth-gated download) |
+| Package photos | `s3` | `packages/{businessId}/...` | public URL — `https://{bucket}.s3.{region}.amazonaws.com/...` (or `AWS_URL` / CDN) |
+| Payment receipts | `s3` | `receipts/{businessId}/...` | 5-minute **presigned URL** via `ReceiptDownloadController` (never public) |
 
-Moving to S3 removes the local disk as state, which is a prerequisite for running
-multiple app servers or Laravel Cloud/Octane on ephemeral hosts.
+When `AWS_BUCKET` is empty (local dev, CI, tests) the app falls back to the local `public` and
+`local` disks, so nothing here is required to run the project on your machine. `phpunit.xml` pins
+the local disks explicitly.
 
----
+## How it works in code
 
-## 1. Install the S3 driver
+- `config/booktrips.php` → `storage.images_disk` / `storage.receipts_disk` (overridable with
+  `BOOKTRIPS_IMAGES_DISK` / `BOOKTRIPS_RECEIPTS_DISK`) choose the disks; both default to `s3`
+  when `AWS_BUCKET` is set.
+- `PartnerImageController` watermarks the **local upload** and then stores it — a single
+  watermarked object lands in S3, with no queue worker and no re-download/re-upload round trip.
+- `App\Services\MediaUrl` resolves every stored image value to a browsable URL. It accepts
+  absolute URLs (new uploads), legacy `/storage/...` paths and bare keys — so **existing database
+  rows keep working after the move** — and it only ever deletes objects under our own bucket/CDN.
+- Removing a photo in the package editor deletes the S3 object (`MediaUrl::deleteRemoved`).
+- `ReceiptDownloadController` redirects to a signed URL on remote disks and streams local files.
 
-```bash
-composer require league/flysystem-aws-s3-v3 "^3.0"
-```
-
-Then `composer dump-autoload` (composer runs it for you).
-
-## 2. Add an S3 disk for receipts
-
-`config/filesystems.php` already ships a `s3` disk driven by `AWS_*` env vars. It is
-intended for **public** photos. Add a second, **private** disk for receipts:
-
-```php
-'s3_private' => [
-    'driver' => 's3',
-    'key' => env('AWS_ACCESS_KEY_ID'),
-    'secret' => env('AWS_SECRET_ACCESS_KEY'),
-    'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-    'bucket' => env('AWS_PRIVATE_BUCKET'),
-    'url' => env('AWS_PRIVATE_URL'),
-    'endpoint' => env('AWS_ENDPOINT'),
-    'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
-    'throw' => false,
-    'report' => false,
-],
-```
-
-## 3. Environment
+## 1. Environment
 
 ```dotenv
-# Public photos bucket
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=booktrips-public
-AWS_URL=https://cdn.yourdomain.com        # optional CloudFront domain
-# AWS_ENDPOINT=                            # leave empty for AWS proper (set for MinIO/R2)
-
-# Private receipts bucket
-AWS_PRIVATE_BUCKET=booktrips-private
-AWS_PRIVATE_URL=                          # optional; leave empty to keep it fully private
+AWS_DEFAULT_REGION=ap-southeast-1
+AWS_BUCKET=booktips-bucket
+# AWS_URL=                       # optional: CloudFront / custom domain in front of the bucket
 AWS_USE_PATH_STYLE_ENDPOINT=false
+
+# Optional explicit overrides (both default to s3 as soon as AWS_BUCKET is set):
+# BOOKTRIPS_IMAGES_DISK=s3
+# BOOKTRIPS_RECEIPTS_DISK=s3
 ```
 
-Create an IAM user scoped to just these two buckets (no root keys): `s3:PutObject`,
-`s3:GetObject`, `s3:DeleteObject` on each bucket's ARN.
+`AWS_URL` is not required — Laravel generates `https://{bucket}.s3.{region}.amazonaws.com/...`
+URLs. Set it only when you front the bucket with CloudFront or a custom domain.
 
-## 4. Code touch points
+## 2. Bucket setup
 
-### Package photos — `app/Http/Controllers/Partner/PartnerImageController.php`
+1. Create the bucket (e.g. `booktips-bucket`) in `ap-southeast-1`.
+2. Scope an IAM user (no root keys) to that bucket:
 
-```php
-$path = $file->store("packages/{$business->id}", 's3');
-
-WatermarkPackageImage::dispatchSync('s3', $path);
-
-return Storage::disk('s3')->url($path);
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::booktips-bucket/*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::booktips-bucket"
+    }
+  ]
+}
 ```
 
-> **Watermark caveat.** `WatermarkPackageImage` works on a local file path. On S3 the
-> job has no local path, so it currently skips silently (`Watermark skipped …` in the
-> log). If you need watermarks on S3, watermark the photo *before* uploading: write it
-> to `storage/app/tmp`, run `ImageWatermarker::apply()`, then `Storage::disk('s3')->putFileAs(...)`
-> and delete the temp file. This is a small refactor of the upload controller.
+3. Make **only the photos** public — either turn off "Block Public Access" and add a bucket
+   policy, or front the bucket with CloudFront:
 
-### Receipts — `app/Http/Controllers/Partner/PartnerPaymentController.php`
-
-```php
-$path = $file->store("receipts/{$business->id}", 's3_private');
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicPackages",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::booktips-bucket/packages/*"
+    }
+  ]
+}
 ```
 
-### Receipt download — `app/Http/Controllers/ReceiptDownloadController.php`
+Receipts (`receipts/*`) are never covered by a public policy — the partner/admin download route
+signs a 5-minute URL with the IAM credentials above.
 
-`Storage::disk('local')->download()` streams through the app server, which works but
-tunnels every receipt through PHP. For a private bucket, redirect to a short-lived
-signed URL instead:
+## 3. One-time copy of existing files
 
-```php
-return redirect()->away(
-    Storage::disk('s3_private')->temporaryUrl($receipt->file_path, now()->addMinutes(5))
-);
-```
-
-`temporaryUrl` needs the bucket to allow the server's IAM credentials to sign URLs
-(nothing extra beyond the `s3:GetObject` permission already granted).
-
-## 5. Migrating existing files
-
-Install the AWS CLI and copy each tree into its new home. Bucket keys must match what
-the code writes (`packages/...` and `receipts/...`).
+Run this **on the server** (SSH / Ploi terminal) after deploying, with the AWS CLI configured for
+the scoped IAM user. Bucket keys must match what the code writes:
 
 ```bash
-# Public photos → public bucket (no key prefix, matching the code above)
-aws s3 sync storage/app/public s3://booktrips-public --acl public-read
-
-# Private receipts → private bucket
-aws s3 sync storage/app/private s3://booktrips-private
+cd /home/ploi/booktrips.lk
+aws s3 sync storage/app/public/packages s3://booktips-bucket/packages
+aws s3 sync storage/app/private/receipts s3://booktips-bucket/receipts
 ```
 
-On Windows PowerShell use the same commands with the AWS CLI installed and
-`aws configure` completed for the scoped IAM user.
+Legacy `/storage/...` values already in the database keep working — `MediaUrl` rewrites them to
+bucket URLs at render time, so no database update is needed.
 
-If `storage/app/public` was linked via `php artisan storage:link`, `aws s3 sync` follows
-the symlink; if not, sync `storage/app/public` directly.
+## 4. Watermarks
 
-## 6. Public access
+Watermarking happens **before** the file reaches the bucket: `ImageWatermarker` (GD) stamps the
+local upload, then the controller stores the stamped file on the configured disk. That means S3
+never sees an unwatermarked version, there is no background job to keep alive, and partners wait
+only for GD + the transfer. `php -m` must list `gd` on the server (Ploi → PHP → Extensions).
 
-- **Public bucket:** either leave `--acl public-read` on every object (simplest), or
-  restrict the bucket and front it with a CloudFront distribution whose origin access
-  control can read the bucket. Set `AWS_URL` to the CloudFront domain and add
-  `'bucket_endpoint' => false` (the default) so Laravel generates `https://cdn.../key`
-  URLs.
-- **Private bucket:** block all public access; downloads go through the signed-URL
-  redirect above.
+## 5. Verify
 
-## 7. Remove the local-disk assumptions
+1. Upload a photo as a partner → `aws s3 ls s3://booktips-bucket/packages/` shows the new object
+   immediately; the returned URL loads and is watermarked.
+2. Upload a receipt → the object appears under `receipts/...`; download it from the admin console
+   (redirects to a signed URL that expires in 5 minutes).
+3. Remove a photo in the package editor → the object disappears from the bucket.
+4. `storage/logs/laravel.log` has no S3 auth errors and no "Watermark skipped" for the new files.
 
-- You can delete `php artisan storage:link` (`public/storage`) once photos come from S3.
-- Keep `FILESYSTEM_DISK=local` — the app always addresses explicit disks (`public`,
-  `local`, `s3`, `s3_private`), it never relies on the default.
-- `Storage::fake('public')` / `Storage::fake('local')` in the tests keep working
-  unchanged; the watermark test writes to the fake local disk.
+## 6. Rollback
 
-## 8. Verify
-
-1. Upload a photo as a partner → image loads from the S3 URL (and is watermarked if you
-   kept the pre-upload watermark step).
-2. Upload a receipt for an open invoice → admin can download it from `/receipts/{id}`.
-3. Check `storage/logs/laravel.log` has no `Watermark skipped` surprises and no S3 auth errors.
-4. Confirm `aws s3 ls s3://booktrips-public/packages/` shows the new object immediately.
-
-## 9. Rollback
-
-Point the two controllers back to `'public'` / `'local'` and re-run
-`php artisan storage:link`; the `s3`/`s3_private` disks simply become unused.
+Set `BOOKTRIPS_IMAGES_DISK=public` and `BOOKTRIPS_RECEIPTS_DISK=local` (or clear `AWS_BUCKET`) and
+the app is back on local disks; keep `php artisan storage:link` in place and the S3 files remain
+as a backup.

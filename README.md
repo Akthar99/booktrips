@@ -7,6 +7,7 @@ admins approve partners, receipts and keep an eye on everything.
 - **Stack:** Laravel 13 · PHP 8.3 · MySQL · Inertia v3 · React 19 · TypeScript · Tailwind v4 · Pest
 - **Architecture / migration notes:** see [`MIGRATION.md`](MIGRATION.md)
 - **Object storage:** see [`S3-STORAGE-MIGRATION.md`](S3-STORAGE-MIGRATION.md)
+- **SEO:** unique per-package meta/canonical rendered by SSR + nightly `booktrips:sitemap:generate`
 - **Production deploys (Ploi):** see [section 11](#11-deploying-to-ploi-production) and [`deploy.sh`](deploy.sh)
 
 ---
@@ -157,7 +158,7 @@ super admin is sent back to `/admin`.
 | Dashboard | `/partners/dashboard` | Counters (listings, bookings, upcoming trips), recent reservations and quick actions |
 | Packages | `/partners/packages/new`, `/partners/packages/{id}/edit` | Create and edit listings: title, category, description, highlight, location, district, running days (always / date range / weekdays), duration, price + price type, discounts (percentage or fixed, optional date window), guest limits, included/excluded lists, a **plan by day** editor, meeting point, cancellation policy, photos, and a *List this package in search* toggle |
 | Map pin | inside the package form | Search an address or **click anywhere on the map** to drop the pin; the exact coordinates are shown and can be cleared. Packages without a pin are flagged because they never appear on the map |
-| Photos | upload inside the package form (`/partners/images`) | Up to 8 images, **6 MB each**, JPG/PNG/WebP. Every photo is stamped with a translucent **Booktrips.lk** watermark before the upload response returns |
+| Photos | upload inside the package form (`/partners/images`) | Up to 25 images, **6 MB each**, JPG/PNG/WebP. Every photo is stamped with a translucent **Booktrips.lk** watermark before the upload response returns |
 | Share a package | **Share** button on the dashboard row, the edit page and the public listing | Copies the public link and offers WhatsApp / Facebook / the phone's native share sheet |
 | Hide / re-list | **Hide** and **List again** buttons on the dashboard | Hiding deactivates the listing (`active = false`) and drops it from search; *List again* publishes it back. The edit form has the same switch |
 | Reservations | `/partners/bookings` | List + day view, search by code/guest/package, filter by status or date, with counts of what needs an answer. You get a notification when a guest books **and** when a guest cancels |
@@ -286,7 +287,7 @@ Tests run on SQLite in-memory and need the `pdo_sqlite` and `gd` PHP extensions 
 
 ```
 app/
-  Console/Commands/     EscalateStaleBookings (scheduled every 5 min)
+  Console/Commands/     EscalateStaleBookings (every 5 min), GenerateSitemap (nightly)
   Enums/                BookingStatus, InvoiceStatus, ReceiptStatus, UserRole, …
   Http/Controllers/     Home, Page, Package, Geo, Booking, Review, Account, Auth/*, Partner/*, Admin/*
   Http/Middleware/      EnsureAccountIsActive, EnsurePartnerIsApproved, EnsureUserIsAdmin, …
@@ -296,15 +297,14 @@ app/
   Services/             BookingService, PricingService, CommissionService, ScheduleService,
                         AnalyticsService, NotificationService, MailService, GeoSearchService,
                         SmsService (Text.lk), PhoneVerificationService (partner OTP),
-                        ImageWatermarker (GD)
-  Jobs/                 WatermarkPackageImage (runs inline right after each photo upload)
+                        ImageWatermarker (GD), MediaUrl (photo URLs per storage disk)
 config/booktrips.php    commission rate, escalation window, capacity guard, bank details,
                         categories, destinations, upload limits
 resources/js/pages/     every screen (public, auth, traveller, partner, admin)
 resources/js/components/booktrips/   shared UI kit
 routes/web.php          the whole route map
-tests/Feature/          114 tests across auth, catalogue, booking, reviews, partner, admin,
-                        escalation, performance and messaging
+tests/Feature/          123 tests across auth, catalogue, booking, reviews, partner, admin,
+                        escalation, performance, SEO, storage and messaging
 ```
 
 Commission rate, escalation window, capacity guard and the bank details shown to partners are all
@@ -365,6 +365,12 @@ TEXTLK_API_KEY=
 TEXTLK_SENDER_ID=             # the approved alphanumeric sender, not TextLKDemo
 TEXTLK_BASE_URL=https://app.text.lk/api/v3
 
+# Object storage — with AWS_BUCKET set, photos and receipts leave the local disk
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=ap-southeast-1
+AWS_BUCKET=booktips-bucket
+
 BOOKTRIPS_WATERMARK=true
 BOOKTRIPS_WATERMARK_TEXT="Booktrips.lk"
 INERTIA_SSR_ENABLED=true
@@ -374,11 +380,19 @@ Do **not** set `BOOKTRIPS_CA_BUNDLE` on the server (Linux has system CAs — it 
 bare Windows hosts). Until real `MAIL_*` / `TEXTLK_*` values are filled in, emails and SMS fall
 back to `storage/logs`.
 
+### Object storage (S3)
+
+Setting `AWS_BUCKET` switches partner photos and payment receipts from local disks to S3
+automatically — no other change needed. Make `packages/*` publicly readable (bucket policy, or a
+CloudFront distribution via `AWS_URL`); `receipts/*` stays private and downloads use 5-minute
+signed URLs. For the IAM policy, bucket policy and the one-time copy of existing files, see
+[`S3-STORAGE-MIGRATION.md`](S3-STORAGE-MIGRATION.md).
+
 ### First deploy
 
 The deploy script pulls the code, installs Composer dependencies, builds the client + SSR
-bundles, migrates and restarts the long-running processes. After the first successful deploy,
-run these once (Ploi terminal / SSH):
+bundles, migrates, rebuilds the sitemap and restarts the long-running processes. After the first
+successful deploy, run these once (Ploi terminal / SSH):
 
 ```bash
 cd /home/ploi/booktrips.lk
@@ -405,18 +419,22 @@ One cron job, **every minute**:
 cd /home/ploi/booktrips.lk && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-It drives `booktrips:escalate-stale-bookings` (flags unanswered bookings after 24 hours).
+It drives `booktrips:escalate-stale-bookings` (flags unanswered bookings after 24 hours) and the
+nightly `booktrips:sitemap:generate` rebuild of `public/sitemap.xml`.
 
 ### Backups
 
-Back up the **database** and **`/home/ploi/booktrips.lk/storage/app`** — that directory holds
-every uploaded photo and payment receipt.
+Back up the **database** (Ploi handles this) and the **S3 bucket** — photos and receipts live
+there now, so enable bucket **versioning** (and a lifecycle rule if you want extra copies).
+Anything still under `/home/ploi/booktrips.lk/storage/app` is legacy local data kept during the
+S3 move — see [`S3-STORAGE-MIGRATION.md`](S3-STORAGE-MIGRATION.md).
 
 ### Troubleshooting
 
 | Symptom | Fix |
 | --- | --- |
 | Photos have no watermark | `php -m` must list `gd`; enable it in Ploi → PHP → Extensions and reload PHP-FPM |
+| Photos 403 from S3 | bucket policy must allow public `s3:GetObject` on `packages/*`, or set `AWS_URL` to the CDN domain |
 | SMS fails with a cURL/SSL error | `curl -I https://app.text.lk` on the server; if needed, point `BOOKTRIPS_CA_BUNDLE` at `/etc/ssl/certs/ca-certificates.crt` |
 | SSR daemon crash-loops | Its log usually says `node: command not found` — install Node 22 for the site, or set `INERTIA_SSR_RUNTIME` to the absolute `node` path |
 | Deployed but old UI | Check the deploy log for `npm run build:ssr` errors; `public/build/manifest.json` must exist |

@@ -5,9 +5,11 @@ namespace App\Models;
 use App\Enums\DiscountType;
 use App\Enums\PriceType;
 use App\Enums\ScheduleType;
+use App\Services\MediaUrl;
 use Database\Factories\PackageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -97,7 +99,6 @@ class Package extends Model
             'excluded' => 'array',
             'itinerary' => 'array',
             'amenities' => 'array',
-            'images' => 'array',
             'lat' => 'float',
             'lng' => 'float',
             'rating' => 'float',
@@ -105,6 +106,34 @@ class Package extends Model
             'featured' => 'boolean',
             'active' => 'boolean',
         ];
+    }
+
+    /**
+     * Images are stored as paths/URLs but always handed out as browsable URLs.
+     *
+     * @return Attribute<array<int, string>, array<int, string>|string|null>
+     */
+    protected function images(): Attribute
+    {
+        return Attribute::make(
+            get: function (mixed $value): array {
+                $decoded = is_array($value) ? $value : json_decode((string) $value, true);
+                $media = app(MediaUrl::class);
+
+                return array_values(array_filter(array_map(
+                    fn (mixed $image): ?string => is_string($image) ? $media->url($image) : null,
+                    is_array($decoded) ? $decoded : [],
+                )));
+            },
+            set: function (mixed $value): string {
+                $images = array_values(array_filter(
+                    is_array($value) ? $value : [],
+                    fn (mixed $image): bool => is_string($image) && $image !== '',
+                ));
+
+                return json_encode($images, JSON_UNESCAPED_SLASHES) ?: '[]';
+            },
+        );
     }
 
     /**

@@ -165,12 +165,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | File storage
+    |--------------------------------------------------------------------------
+    |
+    | Partner photos and payment receipts move to S3 automatically once the
+    | AWS_BUCKET environment variable is set. Locally (and in tests) they stay
+    | on the public/local disks.
+    |
+    */
+
+    'storage' => [
+        'images_disk' => env('BOOKTRIPS_IMAGES_DISK', env('AWS_BUCKET') ? 's3' : 'public'),
+        'receipts_disk' => env('BOOKTRIPS_RECEIPTS_DISK', env('AWS_BUCKET') ? 's3' : 'local'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Package uploads
     |--------------------------------------------------------------------------
     */
 
     'uploads' => [
-        'max_images' => 8,
+        // Photos a partner may attach to one package.
+        'max_images' => 25,
         'max_image_kb' => 6144,
         'max_receipt_kb' => 8192,
 

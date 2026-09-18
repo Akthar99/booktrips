@@ -5,6 +5,7 @@ namespace App\Presenters;
 use App\Models\Business;
 use App\Models\Package;
 use App\Services\PricingService;
+use Illuminate\Support\Str;
 
 class CatalogPresenter
 {
@@ -65,6 +66,47 @@ class CatalogPresenter
             'amenities' => $package->amenities ?? [],
             'meeting_point' => $package->meeting_point,
             'cancellation_policy' => $package->cancellation_policy,
+        ];
+    }
+
+    /**
+     * Unique head tags for the public package page — rendered by SSR before
+     * the browser sees the document.
+     *
+     * @return array{title: string, description: string, canonical: string, image: string|null}
+     */
+    public function packageSeo(Package $package): array
+    {
+        $categoryNames = array_column(config('booktrips.categories'), 'name', 'slug');
+        $category = (string) ($categoryNames[$package->category] ?? Str::headline((string) $package->category));
+
+        $duration = $package->duration_days >= 2 ? $package->duration_days.'-day' : 'full-day';
+
+        $location = trim((string) $package->location);
+        $title = $location !== '' && ! Str::contains(Str::lower((string) $package->title), Str::lower("in {$location}"))
+            ? "{$package->title} in {$location} | Book Trips Sri Lanka"
+            : "{$package->title} | Book Trips Sri Lanka";
+
+        $snippet = (string) Str::of((string) ($package->highlight ?: $package->description))
+            ->squish()
+            ->words(14, '')
+            ->trim();
+
+        $description = Str::limit(implode(' ', array_filter([
+            "Book {$package->title} — a {$duration} ".Str::lower($category).' experience in '
+                .$package->location.($package->district ? ", {$package->district}" : '').'.',
+            $snippet === '' ? 'Verified local hosts and instant booking.' : Str::finish($snippet, '.'),
+            'From LKR '.number_format($package->price_lkr).' — pay at the destination.',
+        ])), 155);
+
+        $images = $package->images ?? [];
+        $image = $images[0] ?? ($package->relationLoaded('business') ? $package->business?->cover_image : null);
+
+        return [
+            'title' => $title,
+            'description' => $description,
+            'canonical' => route('packages.show', $package->slug),
+            'image' => $image,
         ];
     }
 
