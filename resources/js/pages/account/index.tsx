@@ -31,13 +31,13 @@ const Account: InertiaComponent<AccountProps> = ({ bookingCount }) => {
     return (
         <div className="mx-auto w-[min(560px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">My account</h1>
-            <p className="mb-4 text-muted">{user?.email}</p>
+            <p className="text-muted mb-4">{user?.email}</p>
             {user?.email_verified ? (
-                <div className="my-2 mb-2 rounded-xl bg-brand-50 px-3 py-2.5 text-[13px] text-brand-950">
+                <div className="bg-brand-50 text-brand-950 my-2 mb-2 rounded-xl px-3 py-2.5 text-[13px]">
                     Email verified — you can book.
                 </div>
             ) : (
-                <div className="my-2 mb-2 rounded-xl bg-orange-50 px-3 py-2.5 text-[13px] text-warn">
+                <div className="text-warn my-2 mb-2 rounded-xl bg-orange-50 px-3 py-2.5 text-[13px]">
                     Email not verified. You cannot book yet.{' '}
                     <Link className="font-bold underline" href="/verify-email">
                         Verify
@@ -46,37 +46,50 @@ const Account: InertiaComponent<AccountProps> = ({ bookingCount }) => {
             )}
             {user?.pending_email ? (
                 <Alert tone="note">
-                    Waiting on confirmation for <strong>{user.pending_email}</strong>. Open the link we sent to
-                    that address to finish the change.
+                    Waiting on confirmation for{' '}
+                    <strong>{user.pending_email}</strong>. Open the link we sent
+                    to that address to finish the change.
                 </Alert>
             ) : null}
-            <p className="mt-3 text-[13px] text-muted">{bookingCount} bookings on this account.</p>
+            <p className="text-muted mt-3 text-[13px]">
+                {bookingCount} bookings on this account.
+            </p>
 
             <form
                 className="mt-5"
                 onSubmit={(event) => {
                     event.preventDefault();
-                    profileForm.put(updateProfile.url(), { preserveScroll: true });
+                    profileForm.put(updateProfile.url(), {
+                        preserveScroll: true,
+                    });
                 }}
             >
                 <h3 className="mb-2 font-sans text-lg font-bold">Profile</h3>
-                {profileForm.recentlySuccessful ? <Alert tone="success">Profile saved.</Alert> : null}
-                {profileForm.errors.name ? <Alert tone="error">{profileForm.errors.name}</Alert> : null}
+                {profileForm.recentlySuccessful ? (
+                    <Alert tone="success">Profile saved.</Alert>
+                ) : null}
+                {profileForm.errors.name ? (
+                    <Alert tone="error">{profileForm.errors.name}</Alert>
+                ) : null}
                 <Field label="Name">
                     <Input
                         value={profileForm.data.name}
-                        onChange={(event) => profileForm.setData('name', event.target.value)}
+                        onChange={(event) =>
+                            profileForm.setData('name', event.target.value)
+                        }
                     />
                 </Field>
                 <Field label="Phone">
                     <Input
                         value={profileForm.data.phone}
-                        onChange={(event) => profileForm.setData('phone', event.target.value)}
+                        onChange={(event) =>
+                            profileForm.setData('phone', event.target.value)
+                        }
                     />
                 </Field>
                 <button
                     type="submit"
-                    className="cursor-pointer rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900 disabled:opacity-55"
+                    className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition disabled:opacity-55"
                     disabled={profileForm.processing}
                 >
                     Save
@@ -90,24 +103,32 @@ const Account: InertiaComponent<AccountProps> = ({ bookingCount }) => {
                     emailForm.post(changeEmail.url(), { preserveScroll: true });
                 }}
             >
-                <h3 className="mb-2 font-sans text-lg font-bold">Reset email</h3>
-                <p className="mb-2 text-[13px] text-muted">
+                <h3 className="mb-2 font-sans text-lg font-bold">
+                    Reset email
+                </h3>
+                <p className="text-muted mb-2 text-[13px]">
                     We’ll send a confirmation link to the new address.
                 </p>
                 {emailForm.recentlySuccessful ? (
-                    <Alert tone="success">We sent a confirmation link to the new address.</Alert>
+                    <Alert tone="success">
+                        We sent a confirmation link to the new address.
+                    </Alert>
                 ) : null}
-                {emailForm.errors.email ? <Alert tone="error">{emailForm.errors.email}</Alert> : null}
+                {emailForm.errors.email ? (
+                    <Alert tone="error">{emailForm.errors.email}</Alert>
+                ) : null}
                 <Field label="New email">
                     <Input
                         type="email"
                         value={emailForm.data.email}
-                        onChange={(event) => emailForm.setData('email', event.target.value)}
+                        onChange={(event) =>
+                            emailForm.setData('email', event.target.value)
+                        }
                     />
                 </Field>
                 <button
                     type="submit"
-                    className="cursor-pointer rounded-full border border-line bg-white px-4.5 py-2.5 text-sm font-bold text-brand-900 transition hover:border-brand-700 disabled:opacity-55"
+                    className="border-line text-brand-900 hover:border-brand-700 cursor-pointer rounded-full border bg-white px-4.5 py-2.5 text-sm font-bold transition disabled:opacity-55"
                     disabled={emailForm.processing}
                 >
                     Send confirmation
@@ -124,24 +145,39 @@ const Account: InertiaComponent<AccountProps> = ({ bookingCount }) => {
                     });
                 }}
             >
-                <h3 className="mb-2 font-sans text-lg font-bold">Reset password</h3>
-                {passwordForm.recentlySuccessful ? <Alert tone="success">Password updated.</Alert> : null}
-                {passwordForm.errors.current_password ? (
-                    <Alert tone="error">{passwordForm.errors.current_password}</Alert>
+                <h3 className="mb-2 font-sans text-lg font-bold">
+                    Reset password
+                </h3>
+                {passwordForm.recentlySuccessful ? (
+                    <Alert tone="success">Password updated.</Alert>
                 ) : null}
-                {passwordForm.errors.password ? <Alert tone="error">{passwordForm.errors.password}</Alert> : null}
+                {passwordForm.errors.current_password ? (
+                    <Alert tone="error">
+                        {passwordForm.errors.current_password}
+                    </Alert>
+                ) : null}
+                {passwordForm.errors.password ? (
+                    <Alert tone="error">{passwordForm.errors.password}</Alert>
+                ) : null}
                 <Field label="Current password">
                     <Input
                         type="password"
                         value={passwordForm.data.current_password}
-                        onChange={(event) => passwordForm.setData('current_password', event.target.value)}
+                        onChange={(event) =>
+                            passwordForm.setData(
+                                'current_password',
+                                event.target.value,
+                            )
+                        }
                     />
                 </Field>
                 <Field label="New password">
                     <Input
                         type="password"
                         value={passwordForm.data.password}
-                        onChange={(event) => passwordForm.setData('password', event.target.value)}
+                        onChange={(event) =>
+                            passwordForm.setData('password', event.target.value)
+                        }
                     />
                 </Field>
                 <PasswordRules password={passwordForm.data.password} />
@@ -149,12 +185,17 @@ const Account: InertiaComponent<AccountProps> = ({ bookingCount }) => {
                     <Input
                         type="password"
                         value={passwordForm.data.password_confirmation}
-                        onChange={(event) => passwordForm.setData('password_confirmation', event.target.value)}
+                        onChange={(event) =>
+                            passwordForm.setData(
+                                'password_confirmation',
+                                event.target.value,
+                            )
+                        }
                     />
                 </Field>
                 <button
                     type="submit"
-                    className="cursor-pointer rounded-full border border-line bg-white px-4.5 py-2.5 text-sm font-bold text-brand-900 transition hover:border-brand-700 disabled:opacity-55"
+                    className="border-line text-brand-900 hover:border-brand-700 cursor-pointer rounded-full border bg-white px-4.5 py-2.5 text-sm font-bold transition disabled:opacity-55"
                     disabled={passwordForm.processing}
                 >
                     Update password
@@ -162,7 +203,10 @@ const Account: InertiaComponent<AccountProps> = ({ bookingCount }) => {
             </form>
 
             <p className="mt-6">
-                <Link className="font-bold text-brand-800" href="/account/bookings">
+                <Link
+                    className="text-brand-800 font-bold"
+                    href="/account/bookings"
+                >
                     My bookings
                 </Link>
             </p>

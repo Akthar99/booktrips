@@ -22,7 +22,10 @@ export default function SharePackage({
     const wrap = useRef<HTMLDivElement>(null);
 
     const path = `/packages/${slug || id}`;
-    const url = typeof window === 'undefined' ? path : `${window.location.origin}${path}`;
+    const url =
+        typeof window === 'undefined'
+            ? path
+            : `${window.location.origin}${path}`;
     const text = `${title} · BookTrips.lk`;
 
     useEffect(() => {
@@ -68,7 +71,7 @@ export default function SharePackage({
                 type="button"
                 className={
                     className ??
-                    'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[13px] font-bold text-brand-900 transition hover:border-brand-700'
+                    'border-line text-brand-900 hover:border-brand-700 inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-[13px] font-bold transition'
                 }
                 onClick={nativeShare}
                 aria-haspopup="dialog"
@@ -78,8 +81,8 @@ export default function SharePackage({
                 {label}
             </button>
             {open ? (
-                <div className="absolute top-[calc(100%+6px)] right-0 z-90 w-72 rounded-[14px] border border-line bg-white p-3 text-left shadow-card">
-                    <span className="mb-2 block text-xs font-bold tracking-wide text-muted uppercase">
+                <div className="border-line shadow-card absolute top-[calc(100%+6px)] right-0 z-90 w-72 rounded-[14px] border bg-white p-3 text-left">
+                    <span className="text-muted mb-2 block text-xs font-bold tracking-wide uppercase">
                         Share this package
                     </span>
                     <div className="mb-2 flex items-center gap-2">
@@ -91,7 +94,7 @@ export default function SharePackage({
                         />
                         <button
                             type="button"
-                            className="grid h-9.5 w-9.5 shrink-0 cursor-pointer place-items-center rounded-lg border border-line bg-white text-brand-900"
+                            className="border-line text-brand-900 grid h-9.5 w-9.5 shrink-0 cursor-pointer place-items-center rounded-lg border bg-white"
                             onClick={copy}
                             aria-label="Copy link"
                         >
@@ -103,7 +106,7 @@ export default function SharePackage({
                             href={`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-lg bg-brand-50 px-3 py-2 text-center text-[13px] font-bold text-brand-900"
+                            className="bg-brand-50 text-brand-900 rounded-lg px-3 py-2 text-center text-[13px] font-bold"
                         >
                             WhatsApp
                         </a>
@@ -111,12 +114,16 @@ export default function SharePackage({
                             href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-lg bg-brand-50 px-3 py-2 text-center text-[13px] font-bold text-brand-900"
+                            className="bg-brand-50 text-brand-900 rounded-lg px-3 py-2 text-center text-[13px] font-bold"
                         >
                             Facebook
                         </a>
                     </div>
-                    {copied ? <span className="mt-2 block text-xs font-bold text-brand-800">Link copied</span> : null}
+                    {copied ? (
+                        <span className="text-brand-800 mt-2 block text-xs font-bold">
+                            Link copied
+                        </span>
+                    ) : null}
                 </div>
             ) : null}
         </div>

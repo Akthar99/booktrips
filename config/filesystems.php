@@ -53,7 +53,10 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
+            // `?: null` is load-bearing: an empty AWS_URL= in the environment
+            // would otherwise make Flysystem return scheme-less paths like
+            // "/packages/9/photo.jpg" and every image breaks.
+            'url' => env('AWS_URL') ?: null,
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
             'throw' => false,

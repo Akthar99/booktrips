@@ -104,7 +104,7 @@ class AdminPartnerController extends Controller
             $phone = $this->phones->normalise($business->phone);
 
             if ($phone !== null) {
-                $this->sms->send($phone, 'Great news — BookTrips approved your partner application. Sign in and start publishing your packages.');
+                $this->sms->queue($phone, 'Great news — BookTrips approved your partner application. Sign in and start publishing your packages.');
             }
         }
 

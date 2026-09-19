@@ -46,7 +46,11 @@ const STATUS_TONES: Record<string, string> = {
     resolved: 'bg-cream-dark text-muted',
 };
 
-const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories }) => {
+const Support: InertiaComponent<SupportProps> = ({
+    tickets,
+    selected,
+    categories,
+}) => {
     const [creating, setCreating] = useState(tickets.length === 0 && !selected);
 
     const form = useForm({
@@ -89,14 +93,15 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                 <div>
                     <h1 className="text-4xl">Help &amp; support</h1>
                     <p className="text-muted">
-                        Ask the BookTrips team anything — bookings, payments, your account or the partner tools.
-                        We reply here and by email.
+                        Ask the BookTrips team anything — bookings, payments,
+                        your account or the partner tools. We reply here and by
+                        email.
                     </p>
                 </div>
                 {!creating ? (
                     <button
                         type="button"
-                        className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
+                        className="bg-brand-800 hover:bg-brand-900 inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition"
                         onClick={() => setCreating(true)}
                     >
                         <MessageSquarePlus size={16} /> New request
@@ -105,24 +110,36 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
             </div>
 
             {creating ? (
-                <form onSubmit={submitTicket} className="mb-5 rounded-card border border-line bg-white p-6">
+                <form
+                    onSubmit={submitTicket}
+                    className="rounded-card border-line mb-5 border bg-white p-6"
+                >
                     <h2 className="mb-3 text-2xl">New request</h2>
                     <Field label="Subject">
                         <Input
                             required
                             placeholder="Short summary of the problem"
                             value={form.data.subject}
-                            onChange={(event) => form.setData('subject', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('subject', event.target.value)
+                            }
                         />
-                        {form.errors.subject ? <Alert tone="error">{form.errors.subject}</Alert> : null}
+                        {form.errors.subject ? (
+                            <Alert tone="error">{form.errors.subject}</Alert>
+                        ) : null}
                     </Field>
                     <Field label="What is it about?">
                         <Select
                             value={form.data.category}
-                            onChange={(event) => form.setData('category', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('category', event.target.value)
+                            }
                         >
                             {categories.map((category) => (
-                                <option key={category.value} value={category.value}>
+                                <option
+                                    key={category.value}
+                                    value={category.value}
+                                >
                                     {category.label}
                                 </option>
                             ))}
@@ -133,9 +150,13 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                             required
                             placeholder="What happened, when, and what would you like us to do?"
                             value={form.data.body}
-                            onChange={(event) => form.setData('body', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('body', event.target.value)
+                            }
                         />
-                        {form.errors.body ? <Alert tone="error">{form.errors.body}</Alert> : null}
+                        {form.errors.body ? (
+                            <Alert tone="error">{form.errors.body}</Alert>
+                        ) : null}
                     </Field>
                     <div className="flex gap-2">
                         <Button type="submit" disabled={form.processing}>
@@ -144,7 +165,7 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                         {tickets.length ? (
                             <button
                                 type="button"
-                                className="cursor-pointer rounded-full border border-line bg-white px-4 py-2.5 text-sm font-bold text-brand-900"
+                                className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-4 py-2.5 text-sm font-bold"
                                 onClick={() => setCreating(false)}
                             >
                                 Cancel
@@ -155,26 +176,35 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
             ) : null}
 
             <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
-                <div className="h-fit rounded-card border border-line bg-white">
-                    <h2 className="border-b border-line px-4 py-3 text-sm font-bold">Your requests</h2>
+                <div className="rounded-card border-line h-fit border bg-white">
+                    <h2 className="border-line border-b px-4 py-3 text-sm font-bold">
+                        Your requests
+                    </h2>
                     {tickets.length === 0 ? (
-                        <p className="px-4 py-3 text-[13px] text-muted">Nothing yet.</p>
+                        <p className="text-muted px-4 py-3 text-[13px]">
+                            Nothing yet.
+                        </p>
                     ) : null}
                     {tickets.map((ticket) => (
                         <Link
                             key={ticket.id}
                             href={`/support?ticket=${ticket.id}`}
                             className={cn(
-                                'block border-b border-line px-4 py-3 transition hover:bg-cream',
+                                'border-line hover:bg-cream block border-b px-4 py-3 transition',
                                 selected?.id === ticket.id && 'bg-cream',
                             )}
                         >
-                            <strong className="block text-[13px] text-brand-900">{ticket.subject}</strong>
-                            <span className="text-[12px] text-muted">{ticket.category_label}</span>
+                            <strong className="text-brand-900 block text-[13px]">
+                                {ticket.subject}
+                            </strong>
+                            <span className="text-muted text-[12px]">
+                                {ticket.category_label}
+                            </span>
                             <span
                                 className={cn(
                                     'mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                    STATUS_TONES[ticket.status] ?? 'bg-cream-dark text-muted',
+                                    STATUS_TONES[ticket.status] ??
+                                        'bg-cream-dark text-muted',
                                 )}
                             >
                                 {ticket.status_label}
@@ -184,22 +214,32 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                 </div>
 
                 {selected ? (
-                    <div className="rounded-card border border-line bg-white p-5">
+                    <div className="rounded-card border-line border bg-white p-5">
                         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                             <h2 className="text-2xl">{selected.subject}</h2>
                             {selected.status === 'resolved' ? (
                                 <button
                                     type="button"
-                                    className="cursor-pointer rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-bold text-brand-900"
-                                    onClick={() => router.patch(ticketStatus.url(selected.id), { status: 'open' })}
+                                    className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-3.5 py-2 text-[13px] font-bold"
+                                    onClick={() =>
+                                        router.patch(
+                                            ticketStatus.url(selected.id),
+                                            { status: 'open' },
+                                        )
+                                    }
                                 >
                                     Reopen
                                 </button>
                             ) : (
                                 <button
                                     type="button"
-                                    className="cursor-pointer rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-bold text-muted"
-                                    onClick={() => router.patch(ticketStatus.url(selected.id), { status: 'resolved' })}
+                                    className="border-line text-muted cursor-pointer rounded-full border bg-white px-3.5 py-2 text-[13px] font-bold"
+                                    onClick={() =>
+                                        router.patch(
+                                            ticketStatus.url(selected.id),
+                                            { status: 'resolved' },
+                                        )
+                                    }
                                 >
                                     Mark resolved
                                 </button>
@@ -211,18 +251,28 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                                     key={message.id}
                                     className={cn(
                                         'rounded-xl px-3.5 py-2.5',
-                                        message.is_staff ? 'bg-brand-50' : 'bg-cream',
+                                        message.is_staff
+                                            ? 'bg-brand-50'
+                                            : 'bg-cream',
                                     )}
                                 >
-                                    <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-bold tracking-wide text-muted uppercase">
-                                        <span>{message.is_staff ? 'BookTrips team' : message.author}</span>
+                                    <div className="text-muted mb-1 flex items-center justify-between gap-2 text-[11px] font-bold tracking-wide uppercase">
+                                        <span>
+                                            {message.is_staff
+                                                ? 'BookTrips team'
+                                                : message.author}
+                                        </span>
                                         <span>
                                             {message.created_at
-                                                ? new Date(message.created_at).toLocaleString('en-GB')
+                                                ? new Date(
+                                                      message.created_at,
+                                                  ).toLocaleString('en-GB')
                                                 : ''}
                                         </span>
                                     </div>
-                                    <p className="text-[13px] whitespace-pre-line">{message.body}</p>
+                                    <p className="text-[13px] whitespace-pre-line">
+                                        {message.body}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -230,10 +280,14 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                             <Textarea
                                 placeholder="Add a message…"
                                 value={reply.data.body}
-                                onChange={(event) => reply.setData('body', event.target.value)}
+                                onChange={(event) =>
+                                    reply.setData('body', event.target.value)
+                                }
                             />
                             {Object.values(reply.errors)[0] ? (
-                                <Alert tone="error">{Object.values(reply.errors)[0]}</Alert>
+                                <Alert tone="error">
+                                    {Object.values(reply.errors)[0]}
+                                </Alert>
                             ) : null}
                             <Button type="submit" disabled={reply.processing}>
                                 {reply.processing ? 'Sending…' : 'Send message'}
@@ -241,7 +295,7 @@ const Support: InertiaComponent<SupportProps> = ({ tickets, selected, categories
                         </form>
                     </div>
                 ) : (
-                    <div className="rounded-card border border-line bg-white p-6 text-sm text-muted">
+                    <div className="rounded-card border-line text-muted border bg-white p-6 text-sm">
                         Pick a request on the left, or start a new one.
                     </div>
                 )}

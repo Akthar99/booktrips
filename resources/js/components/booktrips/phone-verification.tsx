@@ -57,7 +57,11 @@ export default function PhoneVerification({
         );
     }
 
-    async function post(url: string, body: Record<string, string>, onOk: (data: Record<string, unknown>) => void) {
+    async function post(
+        url: string,
+        body: Record<string, string>,
+        onOk: (data: Record<string, unknown>) => void,
+    ) {
         setBusy(true);
         setError('');
         setNote('');
@@ -86,7 +90,8 @@ export default function PhoneVerification({
                 setError(
                     data.errors
                         ? (Object.values(data.errors).flat()[0] as string)
-                        : (data.message ?? 'Something went wrong. Please try again.'),
+                        : (data.message ??
+                              'Something went wrong. Please try again.'),
                 );
                 resend.start(Math.max(0, data.cooldown ?? 0));
 
@@ -95,29 +100,44 @@ export default function PhoneVerification({
 
             onOk(data as Record<string, unknown>);
         } catch {
-            setError('Could not reach the server. Check your connection and try again.');
+            setError(
+                'Could not reach the server. Check your connection and try again.',
+            );
         } finally {
             setBusy(false);
         }
     }
 
     return (
-        <div className="mb-3 rounded-xl border border-line bg-cream px-3.5 py-3">
-            <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-brand-900">
+        <div className="border-line bg-cream mb-3 rounded-xl border px-3.5 py-3">
+            <div className="text-brand-900 mb-2 flex items-center gap-2 text-[13px] font-bold">
                 {verified ? <CheckCircle2 size={15} /> : null}
-                {verified ? 'Mobile number verified' : 'Verify your mobile number'}
+                {verified
+                    ? 'Mobile number verified'
+                    : 'Verify your mobile number'}
             </div>
             {!verified ? (
                 <>
-                    <p className="mb-2 text-[12px] text-muted">
-                        {hint ?? 'We text a 6-digit code to confirm the number belongs to you.'}
+                    <p className="text-muted mb-2 text-[12px]">
+                        {hint ??
+                            'We text a 6-digit code to confirm the number belongs to you.'}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
-                        <Button type="button" disabled={busy || resend.active} onClick={() => post(sendUrl, { phone }, () => {
-                            setSent(true);
-                            setNote('Code sent. Check your SMS.');
-                        })}>
-                            {resend.active ? `Resend in ${resend.seconds}s` : sent ? 'Resend code' : 'Send code'}
+                        <Button
+                            type="button"
+                            disabled={busy || resend.active}
+                            onClick={() =>
+                                post(sendUrl, { phone }, () => {
+                                    setSent(true);
+                                    setNote('Code sent. Check your SMS.');
+                                })
+                            }
+                        >
+                            {resend.active
+                                ? `Resend in ${resend.seconds}s`
+                                : sent
+                                  ? 'Resend code'
+                                  : 'Send code'}
                         </Button>
                         {sent ? (
                             <>
@@ -127,16 +147,31 @@ export default function PhoneVerification({
                                     inputMode="numeric"
                                     maxLength={6}
                                     value={code}
-                                    onChange={(event) => setCode(event.target.value.replace(/[^0-9]/g, ''))}
+                                    onChange={(event) =>
+                                        setCode(
+                                            event.target.value.replace(
+                                                /[^0-9]/g,
+                                                '',
+                                            ),
+                                        )
+                                    }
                                 />
                                 <Button
                                     type="button"
                                     disabled={busy || code.length < 4}
                                     onClick={() =>
-                                        post(confirmUrl, { phone, code }, () => {
-                                            setVerifiedFor(normalisePhone(phone));
-                                            setNote('Mobile number verified.');
-                                        })
+                                        post(
+                                            confirmUrl,
+                                            { phone, code },
+                                            () => {
+                                                setVerifiedFor(
+                                                    normalisePhone(phone),
+                                                );
+                                                setNote(
+                                                    'Mobile number verified.',
+                                                );
+                                            },
+                                        )
                                     }
                                 >
                                     Verify

@@ -13,6 +13,7 @@ use App\Models\Business;
 use App\Models\Dispute;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -24,6 +25,8 @@ class DisputeService
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly MailService $mail,
+        private readonly SmsService $sms,
+        private readonly PhoneVerificationService $phones,
         private readonly CommissionService $commission,
     ) {}
 
@@ -297,6 +300,12 @@ class DisputeService
         $this->notifications->notify($user, 'dispute', $title, $body, $dispute->booking_id, $link);
 
         $this->mail->quietSend($user->email, new DisputeNoticeMail($dispute, $title, $body, $link));
+
+        $phone = $this->phones->normalise($user->phone);
+
+        if ($phone !== null) {
+            $this->sms->queue($phone, Str::limit("BookTrips: {$title}. {$body}", 155));
+        }
     }
 
     private function linkFor(User $user, Booking $booking): string

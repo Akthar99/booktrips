@@ -10,18 +10,18 @@ behaviour.
 
 ## 1. Stack
 
-| Layer | Choice |
-| --- | --- |
-| Backend | Laravel 13 on PHP 8.3 |
-| Database | MySQL (production), SQLite in-memory for tests |
-| Frontend | Inertia.js v3 + React 19 + TypeScript |
-| Styling | Tailwind CSS v4 (CSS-first `@theme` design tokens in `resources/css/app.css`) |
-| Routing to backend | Laravel Wayfinder (`@/actions/*`, `@/routes/*` typed helpers) |
-| Mail | Laravel Mailables, queued |
-| Queue / cache / sessions | database driver |
-| Static analysis | Larastan (PHPStan level 7) |
-| Tests | Pest 4 |
-| Formatting | Laravel Pint |
+| Layer                    | Choice                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Backend                  | Laravel 13 on PHP 8.3                                                         |
+| Database                 | MySQL (production), SQLite in-memory for tests                                |
+| Frontend                 | Inertia.js v3 + React 19 + TypeScript                                         |
+| Styling                  | Tailwind CSS v4 (CSS-first `@theme` design tokens in `resources/css/app.css`) |
+| Routing to backend       | Laravel Wayfinder (`@/actions/*`, `@/routes/*` typed helpers)                 |
+| Mail                     | Laravel Mailables, queued                                                     |
+| Queue / cache / sessions | database driver                                                               |
+| Static analysis          | Larastan (PHPStan level 7)                                                    |
+| Tests                    | Pest 4                                                                        |
+| Formatting               | Laravel Pint                                                                  |
 
 No JSON files, no client-side routing tables, no hand-rolled auth tokens: the catalogue,
 the booking rules and every money calculation now live in the Laravel app.
@@ -30,17 +30,17 @@ the booking rules and every money calculation now live in the Laravel app.
 
 ## 2. What maps to what
 
-| Prototype concept | Laravel implementation |
-| --- | --- |
-| JSON data files / collections | MySQL migrations: `users`, `businesses`, `packages`, `bookings`, `reviews`, `invoices`, `receipts`, `notifications` |
-| Express route handlers | Controllers: `Home`, `Page`, `Package`, `Geo`, `Booking`, `Review`, `Account`, `Notification`, `ReceiptDownload`, `Auth\*`, `Partner\*`, `Admin\*` |
-| REST API + fetch calls | Inertia page visits and Wayfinder-generated form helpers (`router`, `useForm`) |
-| Public HTML/CSS/JS pages | React pages under `resources/js/pages/*` (30 pages) with shared components in `resources/js/components/booktrips/*` |
-| localStorage / token auth | Laravel session auth + CSRF, email verification, password reset, email change confirmation |
-| Role checks in route handlers | `partner` / `admin` middleware + policies (`PackagePolicy`, `BookingPolicy`, `InvoicePolicy`, `ReviewPolicy`) |
-| Server-side totals copied from requests | `App\Services\BookingService` recalculates every amount; client values are ignored |
-| Stripe-less "pay at destination" flow | Unchanged: the platform takes no money at booking time; partners invoice commissions monthly |
-| Prototype CSS | Rebuilt as a Tailwind design system (not a stylesheet port) |
+| Prototype concept                       | Laravel implementation                                                                                                                             |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| JSON data files / collections           | MySQL migrations: `users`, `businesses`, `packages`, `bookings`, `reviews`, `invoices`, `receipts`, `notifications`                                |
+| Express route handlers                  | Controllers: `Home`, `Page`, `Package`, `Geo`, `Booking`, `Review`, `Account`, `Notification`, `ReceiptDownload`, `Auth\*`, `Partner\*`, `Admin\*` |
+| REST API + fetch calls                  | Inertia page visits and Wayfinder-generated form helpers (`router`, `useForm`)                                                                     |
+| Public HTML/CSS/JS pages                | React pages under `resources/js/pages/*` (30 pages) with shared components in `resources/js/components/booktrips/*`                                |
+| localStorage / token auth               | Laravel session auth + CSRF, email verification, password reset, email change confirmation                                                         |
+| Role checks in route handlers           | `partner` / `admin` middleware + policies (`PackagePolicy`, `BookingPolicy`, `InvoicePolicy`, `ReviewPolicy`)                                      |
+| Server-side totals copied from requests | `App\Services\BookingService` recalculates every amount; client values are ignored                                                                 |
+| Stripe-less "pay at destination" flow   | Unchanged: the platform takes no money at booking time; partners invoice commissions monthly                                                       |
+| Prototype CSS                           | Rebuilt as a Tailwind design system (not a stylesheet port)                                                                                        |
 
 Supporting services:
 
@@ -74,17 +74,17 @@ their own account into a pending partner (one account, no duplicate email).
 
 ## 4. Domain rules (single source of truth)
 
-| Rule | Where | Value |
-| --- | --- | --- |
-| Commission | `config/booktrips.php` → `commission_rate` | 10% of the finished booking total |
-| Invoice period | `CommissionService` | `YYYY-MM` from the booking's check-out month; late entries on a paid month go to `YYYY-MM-adj` |
-| Escalation window | `config/booktrips.php` → `escalation_hours` | 24 h; unanswered `requested` bookings are escalated to admins |
-| Capacity guard | `BookingService::assertCapacity` + `Booking::scopeOverlapping` | Sum of `guests` on overlapping date ranges may not exceed `packages.max_guests`; date bounds are inclusive, so day trips (`check_in == check_out`) are counted correctly |
-| Booking statuses | `App\Enums\BookingStatus` | `requested → confirmed → completed`, plus `rejected` / `cancelled`; partners may only move along allowed transitions, admins may override |
-| Invoice statuses | `App\Enums\InvoiceStatus` | `open → submitted → paid` (a rejected receipt returns the invoice to `open`) |
-| Receipt statuses | `App\Enums\ReceiptStatus` | `pending → confirmed` / `rejected` |
-| Payment method | `BookingService` | `pay_at_destination` only — no online payment at booking time |
-| Uploads | `config/booktrips.php` → `uploads` | max 8 package images (5 MB each), receipt 8 MB |
+| Rule              | Where                                                          | Value                                                                                                                                                                    |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Commission        | `config/booktrips.php` → `commission_rate`                     | 10% of the finished booking total                                                                                                                                        |
+| Invoice period    | `CommissionService`                                            | `YYYY-MM` from the booking's check-out month; late entries on a paid month go to `YYYY-MM-adj`                                                                           |
+| Escalation window | `config/booktrips.php` → `escalation_hours`                    | 24 h; unanswered `requested` bookings are escalated to admins                                                                                                            |
+| Capacity guard    | `BookingService::assertCapacity` + `Booking::scopeOverlapping` | Sum of `guests` on overlapping date ranges may not exceed `packages.max_guests`; date bounds are inclusive, so day trips (`check_in == check_out`) are counted correctly |
+| Booking statuses  | `App\Enums\BookingStatus`                                      | `requested → confirmed → completed`, plus `rejected` / `cancelled`; partners may only move along allowed transitions, admins may override                                |
+| Invoice statuses  | `App\Enums\InvoiceStatus`                                      | `open → submitted → paid` (a rejected receipt returns the invoice to `open`)                                                                                             |
+| Receipt statuses  | `App\Enums\ReceiptStatus`                                      | `pending → confirmed` / `rejected`                                                                                                                                       |
+| Payment method    | `BookingService`                                               | `pay_at_destination` only — no online payment at booking time                                                                                                            |
+| Uploads           | `config/booktrips.php` → `uploads`                             | max 8 package images (5 MB each), receipt 8 MB                                                                                                                           |
 
 ---
 
@@ -217,22 +217,22 @@ on the worker.
 
 `vendor/bin/pest` (or `php artisan test --compact`) runs 123 feature tests covering:
 
-| File | Covers |
-| --- | --- |
-| `tests/Feature/AuthTest.php` | registration, verification mail, role mass-assignment block, weak password/duplicate email, login/logout, suspended login, signed verification, bad signature, password reset, email change |
+| File                                       | Covers                                                                                                                                                                                                                                                                     |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/Feature/AuthTest.php`               | registration, verification mail, role mass-assignment block, weak password/duplicate email, login/logout, suspended login, signed verification, bad signature, password reset, email change                                                                                |
 | `tests/Feature/PartnerApplicationTest.php` | guest applications (business + owner created, admins notified with a deep link), duplicate-email guidance, signed-in traveller upgrades on the same account, pending/approved/admin redirects, no second business per owner, unverified-phone and missing-social rejection |
-| `tests/Feature/PhoneVerificationTest.php` | number normalisation, Text.lk payload (bearer token, sender id, plain type), invalid numbers, per-phone cooldown, hourly cap, per-IP throttling, wrong-code limits, expiry, session proof |
-| `tests/Feature/DisputeTest.php` | no-show and payment reports, wrong-type/early/duplicate guards, stranger 403s, 48-hour response window, strikes, auto-suspension at three, partner penalties billed to their invoice, admin-only queue |
-| `tests/Feature/SupportTest.php` | opening a thread (admins notified), back-and-forth handover, privacy between users, resolved-thread rules, booking ownership, admin inbox |
-| `tests/Feature/AdminInsightsTest.php` | dashboard insights (finance, monthly, attention, top partners), finance summary, business and traveller history pages, access control |
-| `tests/Feature/PackageImageTest.php` | watermark job dispatched per photo, 6 MB limit enforced, watermark changes the file, switch-off behaviour |
-| `tests/Feature/CatalogTest.php` | home props, search filters, hidden packages, slug/id lookup, quote maths, guest/weekday validation, map pins, geo search |
-| `tests/Feature/BookingFlowTest.php` | verified-email requirement, server-side totals, capacity guard, partner confirm + contact redaction, commission/invoice creation, month adjustments, transition rules, cross-partner access, cancellation (partner notified), traveller decision notifications |
-| `tests/Feature/ReviewTest.php` | one review per completed own booking, rating/comment validation, rating recomputation |
-| `tests/Feature/PartnerPanelTest.php` | pending-partner redirect, traveller/admin redirects away from partner areas, package CRUD + slug + discount guard, hide/re-list, cross-partner 403, image upload, private receipt upload/download + admin notification, analytics, dashboard counts |
-| `tests/Feature/AdminPanelTest.php` | console protection (404 to non-admins), application detail payload, partner approval + approval email, listing feature/unlist, suspension, admin self-protection, receipt confirm/reject (partner notified), admin-driven completion + commission |
-| `tests/Feature/EscalationTest.php` | stale escalation job, admins notified, answered bookings untouched |
-| `tests/Feature/PerformanceTest.php` | query budgets per page (catalogue, admin overview, partner dashboard, admin users, traveller bookings), SQL-side catalogue filtering/price sort, pagination |
+| `tests/Feature/PhoneVerificationTest.php`  | number normalisation, Text.lk payload (bearer token, sender id, plain type), invalid numbers, per-phone cooldown, hourly cap, per-IP throttling, wrong-code limits, expiry, session proof                                                                                  |
+| `tests/Feature/DisputeTest.php`            | no-show and payment reports, wrong-type/early/duplicate guards, stranger 403s, 48-hour response window, strikes, auto-suspension at three, partner penalties billed to their invoice, admin-only queue                                                                     |
+| `tests/Feature/SupportTest.php`            | opening a thread (admins notified), back-and-forth handover, privacy between users, resolved-thread rules, booking ownership, admin inbox                                                                                                                                  |
+| `tests/Feature/AdminInsightsTest.php`      | dashboard insights (finance, monthly, attention, top partners), finance summary, business and traveller history pages, access control                                                                                                                                      |
+| `tests/Feature/PackageImageTest.php`       | watermark job dispatched per photo, 6 MB limit enforced, watermark changes the file, switch-off behaviour                                                                                                                                                                  |
+| `tests/Feature/CatalogTest.php`            | home props, search filters, hidden packages, slug/id lookup, quote maths, guest/weekday validation, map pins, geo search                                                                                                                                                   |
+| `tests/Feature/BookingFlowTest.php`        | verified-email requirement, server-side totals, capacity guard, partner confirm + contact redaction, commission/invoice creation, month adjustments, transition rules, cross-partner access, cancellation (partner notified), traveller decision notifications             |
+| `tests/Feature/ReviewTest.php`             | one review per completed own booking, rating/comment validation, rating recomputation                                                                                                                                                                                      |
+| `tests/Feature/PartnerPanelTest.php`       | pending-partner redirect, traveller/admin redirects away from partner areas, package CRUD + slug + discount guard, hide/re-list, cross-partner 403, image upload, private receipt upload/download + admin notification, analytics, dashboard counts                        |
+| `tests/Feature/AdminPanelTest.php`         | console protection (404 to non-admins), application detail payload, partner approval + approval email, listing feature/unlist, suspension, admin self-protection, receipt confirm/reject (partner notified), admin-driven completion + commission                          |
+| `tests/Feature/EscalationTest.php`         | stale escalation job, admins notified, answered bookings untouched                                                                                                                                                                                                         |
+| `tests/Feature/PerformanceTest.php`        | query budgets per page (catalogue, admin overview, partner dashboard, admin users, traveller bookings), SQL-side catalogue filtering/price sort, pagination                                                                                                                |
 
 The suite runs on SQLite in-memory (`phpunit.xml`); locally it needs the `pdo_sqlite` and `gd`
 extensions enabled in `php.ini` (uploads use generated image fixtures).

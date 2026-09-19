@@ -32,7 +32,9 @@ type UsersProps = {
 const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
     const [q, setQ] = useState(filters.q);
     const [role, setRole] = useState(filters.role || 'all');
-    const [suspendTarget, setSuspendTarget] = useState<AdminUserRow | null>(null);
+    const [suspendTarget, setSuspendTarget] = useState<AdminUserRow | null>(
+        null,
+    );
     const [busy, setBusy] = useState(false);
 
     function load(next: { q?: string; role?: string } = {}) {
@@ -40,7 +42,10 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
             '/admin/users',
             {
                 q: (next.q ?? q) || undefined,
-                role: (next.role ?? role) !== 'all' ? (next.role ?? role) : undefined,
+                role:
+                    (next.role ?? role) !== 'all'
+                        ? (next.role ?? role)
+                        : undefined,
             },
             { preserveState: true, preserveScroll: true },
         );
@@ -90,48 +95,64 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
                 </Select>
                 <button
                     type="submit"
-                    className="cursor-pointer rounded-full bg-brand-800 px-4 py-2 text-[13px] font-bold text-white transition hover:bg-brand-900"
+                    className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-4 py-2 text-[13px] font-bold text-white transition"
                 >
                     Search
                 </button>
             </form>
-            <p className="mb-3 text-[13px] text-muted">{users.total} shown</p>
-            <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+            <p className="text-muted mb-3 text-[13px]">{users.total} shown</p>
+            <div className="border-line overflow-x-auto rounded-2xl border bg-white">
                 <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="bg-cream-dark text-[11px] tracking-wide text-muted uppercase">
+                        <tr className="bg-cream-dark text-muted text-[11px] tracking-wide uppercase">
                             <th className="px-3.5 py-3 font-bold">Name</th>
                             <th className="px-3.5 py-3 font-bold">Email</th>
                             <th className="px-3.5 py-3 font-bold">Role</th>
                             <th className="px-3.5 py-3 font-bold">Verified</th>
                             <th className="px-3.5 py-3 font-bold">Bookings</th>
                             <th className="px-3.5 py-3 font-bold">Status</th>
-                            <th className="px-3.5 py-3 text-right font-bold">Actions</th>
+                            <th className="px-3.5 py-3 text-right font-bold">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {users.data.map((user) => (
-                            <tr key={user.id} className="border-t border-line">
+                            <tr key={user.id} className="border-line border-t">
                                 <td className="px-3.5 py-3 text-sm">
                                     {user.name}
                                     {user.business_name ? (
-                                        <div className="text-xs text-muted">{user.business_name}</div>
+                                        <div className="text-muted text-xs">
+                                            {user.business_name}
+                                        </div>
                                     ) : null}
                                 </td>
                                 <td className="px-3.5 py-3 text-sm">
                                     {user.email}
                                     <br />
-                                    <span className="text-muted">{user.phone}</span>
+                                    <span className="text-muted">
+                                        {user.phone}
+                                    </span>
                                 </td>
-                                <td className="px-3.5 py-3 text-sm capitalize">{user.role}</td>
-                                <td className="px-3.5 py-3 text-sm">{user.email_verified ? 'Yes' : 'No'}</td>
-                                <td className="px-3.5 py-3 text-sm">{user.booking_count}</td>
+                                <td className="px-3.5 py-3 text-sm capitalize">
+                                    {user.role}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {user.email_verified ? 'Yes' : 'No'}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {user.booking_count}
+                                </td>
                                 <td className="px-3.5 py-3">
-                                    <StatusBadge status={user.active ? 'active' : 'suspended'} />
+                                    <StatusBadge
+                                        status={
+                                            user.active ? 'active' : 'suspended'
+                                        }
+                                    />
                                 </td>
                                 <td className="px-3.5 py-3 text-right whitespace-nowrap">
                                     <Link
-                                        className="mr-3 text-[13px] font-bold text-brand-800"
+                                        className="text-brand-800 mr-3 text-[13px] font-bold"
                                         href={`/admin/travellers/${user.id}`}
                                     >
                                         History
@@ -139,8 +160,12 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
                                     {!user.email_verified ? (
                                         <button
                                             type="button"
-                                            className="cursor-pointer border-0 bg-transparent text-[13px] font-bold text-brand-800 hover:underline"
-                                            onClick={() => patch(user.id, { email_verified: true })}
+                                            className="text-brand-800 cursor-pointer border-0 bg-transparent text-[13px] font-bold hover:underline"
+                                            onClick={() =>
+                                                patch(user.id, {
+                                                    email_verified: true,
+                                                })
+                                            }
                                         >
                                             Mark verified
                                         </button>
@@ -149,16 +174,22 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
                                         user.active ? (
                                             <button
                                                 type="button"
-                                                className="ml-3.5 cursor-pointer border-0 bg-transparent text-[13px] font-bold text-danger hover:underline"
-                                                onClick={() => setSuspendTarget(user)}
+                                                className="text-danger ml-3.5 cursor-pointer border-0 bg-transparent text-[13px] font-bold hover:underline"
+                                                onClick={() =>
+                                                    setSuspendTarget(user)
+                                                }
                                             >
                                                 Suspend
                                             </button>
                                         ) : (
                                             <button
                                                 type="button"
-                                                className="ml-3.5 cursor-pointer border-0 bg-transparent text-[13px] font-bold text-brand-800 hover:underline"
-                                                onClick={() => patch(user.id, { active: true })}
+                                                className="text-brand-800 ml-3.5 cursor-pointer border-0 bg-transparent text-[13px] font-bold hover:underline"
+                                                onClick={() =>
+                                                    patch(user.id, {
+                                                        active: true,
+                                                    })
+                                                }
                                             >
                                                 Restore
                                             </button>
@@ -170,7 +201,11 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
                     </tbody>
                 </table>
             </div>
-            <Pagination page={users.current_page} lastPage={users.last_page} total={users.total} />
+            <Pagination
+                page={users.current_page}
+                lastPage={users.last_page}
+                total={users.total}
+            />
 
             <ConfirmDialog
                 open={Boolean(suspendTarget)}
@@ -179,7 +214,9 @@ const AdminUsers: InertiaComponent<UsersProps> = ({ users, filters }) => {
                 confirmLabel="Suspend user"
                 danger
                 busy={busy}
-                onConfirm={() => suspendTarget && patch(suspendTarget.id, { active: false })}
+                onConfirm={() =>
+                    suspendTarget && patch(suspendTarget.id, { active: false })
+                }
                 onCancel={() => setSuspendTarget(null)}
             />
         </div>

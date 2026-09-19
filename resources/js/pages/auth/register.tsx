@@ -19,6 +19,7 @@ const Register: InertiaComponent<RegisterProps> = () => {
         phone: '',
         password: '',
         password_confirmation: '',
+        terms: false,
     });
 
     function continueToPassword(event: React.FormEvent) {
@@ -45,22 +46,33 @@ const Register: InertiaComponent<RegisterProps> = () => {
         <div className="flex min-h-[calc(100vh-4.5rem)] items-center justify-center px-4 pt-8 pb-16">
             <form
                 onSubmit={step === 1 ? continueToPassword : submit}
-                className="w-full max-w-[440px] rounded-[20px] border border-line bg-white p-7 shadow-card"
+                className="border-line shadow-card w-full max-w-[440px] rounded-[20px] border bg-white p-7"
                 noValidate
             >
-                <p className="mb-2 text-[13px] font-bold tracking-[0.12em] text-brand-800 uppercase">
+                <p className="text-brand-800 mb-2 text-[13px] font-bold tracking-[0.12em] uppercase">
                     Step {step} of 2
                 </p>
-                <h1 className="mb-2 text-3xl">{step === 1 ? 'Your details' : 'Set a password'}</h1>
-                <p className="mb-5 text-muted">
+                <h1 className="mb-2 text-3xl">
+                    {step === 1 ? 'Your details' : 'Set a password'}
+                </h1>
+                <p className="text-muted mb-5">
                     {step === 1
                         ? 'We’ll send a verification link to this email.'
                         : 'Use a strong password. You’ll need it to book.'}
                 </p>
                 {stepError ? <Alert tone="error">{stepError}</Alert> : null}
-                {form.errors.name ? <Alert tone="error">{form.errors.name}</Alert> : null}
-                {form.errors.email ? <Alert tone="error">{form.errors.email}</Alert> : null}
-                {form.errors.password ? <Alert tone="error">{form.errors.password}</Alert> : null}
+                {form.errors.name ? (
+                    <Alert tone="error">{form.errors.name}</Alert>
+                ) : null}
+                {form.errors.email ? (
+                    <Alert tone="error">{form.errors.email}</Alert>
+                ) : null}
+                {form.errors.password ? (
+                    <Alert tone="error">{form.errors.password}</Alert>
+                ) : null}
+                {form.errors.terms ? (
+                    <Alert tone="error">{form.errors.terms}</Alert>
+                ) : null}
 
                 {step === 1 ? (
                     <>
@@ -68,7 +80,9 @@ const Register: InertiaComponent<RegisterProps> = () => {
                             <Input
                                 required
                                 value={form.data.name}
-                                onChange={(event) => form.setData('name', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData('name', event.target.value)
+                                }
                             />
                         </Field>
                         <Field label="Email">
@@ -76,19 +90,23 @@ const Register: InertiaComponent<RegisterProps> = () => {
                                 type="email"
                                 required
                                 value={form.data.email}
-                                onChange={(event) => form.setData('email', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData('email', event.target.value)
+                                }
                             />
                         </Field>
                         <Field label="Phone">
                             <Input
                                 placeholder="07X XXX XXXX"
                                 value={form.data.phone}
-                                onChange={(event) => form.setData('phone', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData('phone', event.target.value)
+                                }
                             />
                         </Field>
                         <button
                             type="submit"
-                            className="w-full cursor-pointer rounded-full bg-brand-800 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
+                            className="bg-brand-800 hover:bg-brand-900 w-full cursor-pointer rounded-full px-4 py-2.5 text-sm font-bold text-white transition"
                         >
                             Continue
                         </button>
@@ -101,7 +119,9 @@ const Register: InertiaComponent<RegisterProps> = () => {
                                 required
                                 autoComplete="new-password"
                                 value={form.data.password}
-                                onChange={(event) => form.setData('password', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData('password', event.target.value)
+                                }
                             />
                         </Field>
                         <PasswordRules password={form.data.password} />
@@ -111,30 +131,67 @@ const Register: InertiaComponent<RegisterProps> = () => {
                                 required
                                 autoComplete="new-password"
                                 value={form.data.password_confirmation}
-                                onChange={(event) => form.setData('password_confirmation', event.target.value)}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'password_confirmation',
+                                        event.target.value,
+                                    )
+                                }
                             />
                         </Field>
-                        <div className="flex gap-2">
+                        <label className="text-muted mt-4 flex items-start gap-2.5 text-sm">
+                            <input
+                                type="checkbox"
+                                className="accent-brand-800 mt-0.5 h-4 w-4 shrink-0 cursor-pointer"
+                                checked={form.data.terms}
+                                onChange={(event) =>
+                                    form.setData('terms', event.target.checked)
+                                }
+                                required
+                            />
+                            <span>
+                                I agree to the{' '}
+                                <Link
+                                    href="/terms"
+                                    target="_blank"
+                                    className="text-brand-800 font-bold hover:underline"
+                                >
+                                    Terms of Service
+                                </Link>{' '}
+                                and the{' '}
+                                <Link
+                                    href="/privacy"
+                                    target="_blank"
+                                    className="text-brand-800 font-bold hover:underline"
+                                >
+                                    Privacy Policy
+                                </Link>
+                                .
+                            </span>
+                        </label>
+                        <div className="mt-5 flex gap-2">
                             <button
                                 type="button"
-                                className="cursor-pointer rounded-full border border-line bg-white px-4 py-2.5 text-sm font-bold text-brand-900 transition hover:border-brand-700"
+                                className="border-line text-brand-900 hover:border-brand-700 cursor-pointer rounded-full border bg-white px-4 py-2.5 text-sm font-bold transition"
                                 onClick={() => setStep(1)}
                             >
                                 Back
                             </button>
                             <button
                                 type="submit"
-                                className="flex-1 cursor-pointer rounded-full bg-brand-800 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900 disabled:opacity-55"
+                                className="bg-brand-800 hover:bg-brand-900 flex-1 cursor-pointer rounded-full px-4 py-2.5 text-sm font-bold text-white transition disabled:opacity-55"
                                 disabled={form.processing}
                             >
-                                {form.processing ? 'Creating…' : 'Create account'}
+                                {form.processing
+                                    ? 'Creating…'
+                                    : 'Create account'}
                             </button>
                         </div>
                     </>
                 )}
                 <p className="mt-4 text-sm">
                     Already have an account?{' '}
-                    <Link className="font-bold text-brand-800" href="/login">
+                    <Link className="text-brand-800 font-bold" href="/login">
                         Log in
                     </Link>
                 </p>

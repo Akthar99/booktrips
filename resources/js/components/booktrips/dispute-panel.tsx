@@ -86,22 +86,30 @@ export default function DisputePanel({
     }
 
     const firstError = Object.values(form.errors)[0] as string | undefined;
-    const responseError = Object.values(response.errors)[0] as string | undefined;
+    const responseError = Object.values(response.errors)[0] as
+        | string
+        | undefined;
 
     return (
-        <section className="mt-4 rounded-card border border-line bg-white p-5" id="reports">
+        <section
+            className="rounded-card border-line mt-4 border bg-white p-5"
+            id="reports"
+        >
             <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                    <h3 className="font-sans text-base font-bold">Reports &amp; disputes</h3>
-                    <p className="text-[13px] text-muted">
-                        Something went wrong with this trip? Report it here — the other side always gets to
-                        respond before BookTrips decides.
+                    <h3 className="font-sans text-base font-bold">
+                        Reports &amp; disputes
+                    </h3>
+                    <p className="text-muted text-[13px]">
+                        Something went wrong with this trip? Report it here —
+                        the other side always gets to respond before BookTrips
+                        decides.
                     </p>
                 </div>
                 {canReport && !open ? (
                     <button
                         type="button"
-                        className="shrink-0 cursor-pointer rounded-full border border-red-200 bg-white px-3.5 py-2 text-[13px] font-bold text-danger transition hover:border-red-400"
+                        className="text-danger shrink-0 cursor-pointer rounded-full border border-red-200 bg-white px-3.5 py-2 text-[13px] font-bold transition hover:border-red-400"
                         onClick={() => setOpen(true)}
                     >
                         Report a problem
@@ -110,75 +118,111 @@ export default function DisputePanel({
             </div>
 
             {disputes.map((dispute) => (
-                <div key={dispute.id} className="mb-3 rounded-xl border border-line p-3.5">
+                <div
+                    key={dispute.id}
+                    className="border-line mb-3 rounded-xl border p-3.5"
+                >
                     <div className="mb-1.5 flex flex-wrap items-center gap-2">
                         <span
                             className={cn(
                                 'rounded-full px-2.5 py-1 text-[11px] font-bold',
-                                STATUS_TONES[dispute.status] ?? 'bg-cream-dark text-muted',
+                                STATUS_TONES[dispute.status] ??
+                                    'bg-cream-dark text-muted',
                             )}
                         >
                             {dispute.type_label}
                         </span>
                         <strong className="text-sm">{dispute.summary}</strong>
                         {dispute.raised_by_me ? (
-                            <span className="text-[11px] font-bold text-muted">raised by you</span>
+                            <span className="text-muted text-[11px] font-bold">
+                                raised by you
+                            </span>
                         ) : null}
                     </div>
                     {dispute.details ? (
-                        <p className="text-[13px] whitespace-pre-line text-muted">{dispute.details}</p>
+                        <p className="text-muted text-[13px] whitespace-pre-line">
+                            {dispute.details}
+                        </p>
                     ) : null}
 
-                    {dispute.status === 'awaiting_response' && dispute.can_respond ? (
-                        <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-orange-50 px-2.5 py-2 text-[12px] font-semibold text-warn">
+                    {dispute.status === 'awaiting_response' &&
+                    dispute.can_respond ? (
+                        <p className="text-warn mt-2 flex items-center gap-1.5 rounded-lg bg-orange-50 px-2.5 py-2 text-[12px] font-semibold">
                             <Clock size={13} /> Tell us your side before{' '}
                             {dispute.response_deadline_at
-                                ? new Date(dispute.response_deadline_at).toLocaleString('en-GB')
+                                ? new Date(
+                                      dispute.response_deadline_at,
+                                  ).toLocaleString('en-GB')
                                 : 'the deadline'}
                             .
                         </p>
                     ) : null}
 
                     {dispute.response ? (
-                        <div className="mt-2 rounded-lg bg-cream px-3 py-2">
-                            <span className="text-[11px] font-bold tracking-wide text-muted uppercase">
+                        <div className="bg-cream mt-2 rounded-lg px-3 py-2">
+                            <span className="text-muted text-[11px] font-bold tracking-wide uppercase">
                                 Response
                             </span>
-                            <p className="text-[13px] whitespace-pre-line">{dispute.response}</p>
+                            <p className="text-[13px] whitespace-pre-line">
+                                {dispute.response}
+                            </p>
                         </div>
                     ) : null}
 
                     {dispute.status === 'resolved' ? (
-                        <div className="mt-2 rounded-lg bg-cream px-3 py-2 text-[13px]">
+                        <div className="bg-cream mt-2 rounded-lg px-3 py-2 text-[13px]">
                             <strong>
                                 {dispute.resolution_label}
-                                {dispute.penalty_label && dispute.penalty_label !== 'No penalty'
+                                {dispute.penalty_label &&
+                                dispute.penalty_label !== 'No penalty'
                                     ? ` · ${dispute.penalty_label}`
                                     : ''}
                                 {dispute.penalty_amount_lkr
                                     ? ` · Rs. ${dispute.penalty_amount_lkr.toLocaleString()}`
                                     : ''}
                             </strong>
-                            {dispute.resolution_note ? <p className="mt-1">{dispute.resolution_note}</p> : null}
+                            {dispute.resolution_note ? (
+                                <p className="mt-1">
+                                    {dispute.resolution_note}
+                                </p>
+                            ) : null}
                         </div>
                     ) : null}
 
-                    {dispute.can_respond && dispute.status === 'awaiting_response' ? (
+                    {dispute.can_respond &&
+                    dispute.status === 'awaiting_response' ? (
                         respondingTo === dispute.id ? (
-                            <form className="mt-2" onSubmit={(event) => submitResponse(event, dispute.id)}>
+                            <form
+                                className="mt-2"
+                                onSubmit={(event) =>
+                                    submitResponse(event, dispute.id)
+                                }
+                            >
                                 <Textarea
                                     placeholder="What happened from your side? Include anything you can show us."
                                     value={response.data.response}
-                                    onChange={(event) => response.setData('response', event.target.value)}
+                                    onChange={(event) =>
+                                        response.setData(
+                                            'response',
+                                            event.target.value,
+                                        )
+                                    }
                                 />
-                                {responseError ? <Alert tone="error">{responseError}</Alert> : null}
+                                {responseError ? (
+                                    <Alert tone="error">{responseError}</Alert>
+                                ) : null}
                                 <div className="mt-2 flex gap-2">
-                                    <Button type="submit" disabled={response.processing}>
-                                        {response.processing ? 'Sending…' : 'Send my side'}
+                                    <Button
+                                        type="submit"
+                                        disabled={response.processing}
+                                    >
+                                        {response.processing
+                                            ? 'Sending…'
+                                            : 'Send my side'}
                                     </Button>
                                     <button
                                         type="button"
-                                        className="cursor-pointer rounded-full border border-line bg-white px-4 py-2.5 text-sm font-bold text-brand-900"
+                                        className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-4 py-2.5 text-sm font-bold"
                                         onClick={() => setRespondingTo(null)}
                                     >
                                         Cancel
@@ -188,7 +232,7 @@ export default function DisputePanel({
                         ) : (
                             <button
                                 type="button"
-                                className="mt-2 cursor-pointer rounded-full bg-brand-800 px-3.5 py-2 text-[13px] font-bold text-white transition hover:bg-brand-900"
+                                className="bg-brand-800 hover:bg-brand-900 mt-2 cursor-pointer rounded-full px-3.5 py-2 text-[13px] font-bold text-white transition"
                                 onClick={() => setRespondingTo(dispute.id)}
                             >
                                 Respond to this report
@@ -199,20 +243,25 @@ export default function DisputePanel({
             ))}
 
             {disputes.length === 0 ? (
-                <p className="flex items-center gap-2 text-[13px] text-muted">
+                <p className="text-muted flex items-center gap-2 text-[13px]">
                     <ShieldCheck size={15} /> No reports on this booking.
                 </p>
             ) : null}
 
             {open ? (
-                <form onSubmit={submitReport} className="mt-2 rounded-xl border border-line bg-cream p-3.5">
-                    <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-brand-900">
+                <form
+                    onSubmit={submitReport}
+                    className="border-line bg-cream mt-2 rounded-xl border p-3.5"
+                >
+                    <h4 className="text-brand-900 mb-2 flex items-center gap-2 text-sm font-bold">
                         <AlertTriangle size={15} /> What went wrong?
                     </h4>
                     <Field label="Type of problem">
                         <Select
                             value={form.data.type}
-                            onChange={(event) => form.setData('type', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('type', event.target.value)
+                            }
                         >
                             {reportTypes.map((type) => (
                                 <option key={type.value} value={type.value}>
@@ -221,32 +270,42 @@ export default function DisputePanel({
                             ))}
                         </Select>
                     </Field>
-                    <p className="-mt-2 mb-3 text-[12px] text-muted">
-                        {reportTypes.find((type) => type.value === form.data.type)?.blurb}
+                    <p className="text-muted -mt-2 mb-3 text-[12px]">
+                        {
+                            reportTypes.find(
+                                (type) => type.value === form.data.type,
+                            )?.blurb
+                        }
                     </p>
                     <Field label="Short headline">
                         <Textarea
                             className="min-h-[60px]"
                             placeholder="Guest did not arrive and never cancelled"
                             value={form.data.summary}
-                            onChange={(event) => form.setData('summary', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('summary', event.target.value)
+                            }
                         />
                     </Field>
                     <Field label="What happened? (optional)">
                         <Textarea
                             placeholder="Dates, times, who you spoke to, anything that proves your side."
                             value={form.data.details}
-                            onChange={(event) => form.setData('details', event.target.value)}
+                            onChange={(event) =>
+                                form.setData('details', event.target.value)
+                            }
                         />
                     </Field>
-                    {firstError ? <Alert tone="error">{firstError}</Alert> : null}
+                    {firstError ? (
+                        <Alert tone="error">{firstError}</Alert>
+                    ) : null}
                     <div className="mt-1 flex gap-2">
                         <Button type="submit" disabled={form.processing}>
                             {form.processing ? 'Sending…' : 'Send report'}
                         </Button>
                         <button
                             type="button"
-                            className="cursor-pointer rounded-full border border-line bg-white px-4 py-2.5 text-sm font-bold text-brand-900"
+                            className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-4 py-2.5 text-sm font-bold"
                             onClick={() => {
                                 setOpen(false);
                                 router.reload({ only: ['disputes'] });

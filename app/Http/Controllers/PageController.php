@@ -28,4 +28,20 @@ class PageController extends Controller
             ),
         ]);
     }
+
+    /**
+     * Privacy policy — also linked from sign-up and the footer.
+     */
+    public function privacy(): Response
+    {
+        return Inertia::render('legal/privacy');
+    }
+
+    /**
+     * Terms of service — also linked from sign-up and the footer.
+     */
+    public function terms(): Response
+    {
+        return Inertia::render('legal/terms');
+    }
 }

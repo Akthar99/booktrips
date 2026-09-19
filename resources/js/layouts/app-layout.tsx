@@ -18,7 +18,9 @@ export function Container({
         <div
             className={
                 'mx-auto ' +
-                (wide ? 'w-[min(1280px,calc(100%-2rem))]' : 'w-[min(1180px,calc(100%-2rem))]') +
+                (wide
+                    ? 'w-[min(1280px,calc(100%-2rem))]'
+                    : 'w-[min(1180px,calc(100%-2rem))]') +
                 (className ? ` ${className}` : '')
             }
         >
@@ -53,17 +55,17 @@ function FlashToasts() {
         <div className="fixed top-20 right-4 z-[110] max-w-sm">
             <div
                 className={
-                    'flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-card ' +
+                    'shadow-card flex items-start gap-3 rounded-xl border px-4 py-3 text-sm ' +
                     (tone === 'error'
-                        ? 'border-red-200 bg-red-50 text-danger'
-                        : 'border-brand-100 bg-white text-brand-950')
+                        ? 'text-danger border-red-200 bg-red-50'
+                        : 'border-brand-100 text-brand-950 bg-white')
                 }
                 role="status"
             >
                 <span>{message}</span>
                 <button
                     type="button"
-                    className="ml-auto cursor-pointer border-0 bg-transparent p-0 text-muted"
+                    className="text-muted ml-auto cursor-pointer border-0 bg-transparent p-0"
                     onClick={() => setVisible(false)}
                     aria-label="Dismiss"
                 >
@@ -97,9 +99,13 @@ export default function AppLayout({
 /**
  * Attach the standard header/footer shell to an Inertia page.
  */
-export const withAppLayout = (page: ReactNode): ReactNode => <AppLayout>{page}</AppLayout>;
+export const withAppLayout = (page: ReactNode): ReactNode => (
+    <AppLayout>{page}</AppLayout>
+);
 
 /**
  * Same shell without the footer (auth screens keep the page compact).
  */
-export const withAuthLayout = (page: ReactNode): ReactNode => <AppLayout hideFooter>{page}</AppLayout>;
+export const withAuthLayout = (page: ReactNode): ReactNode => (
+    <AppLayout hideFooter>{page}</AppLayout>
+);

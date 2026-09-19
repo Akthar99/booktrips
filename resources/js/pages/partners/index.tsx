@@ -21,7 +21,9 @@ const PERKS = [
     },
 ];
 
-const Partners: InertiaComponent<{ businessTypes: Array<{ slug: string; name: string }> }> = () => {
+const Partners: InertiaComponent<{
+    businessTypes: Array<{ slug: string; name: string }>;
+}> = () => {
     return (
         <>
             <section className="relative flex min-h-[420px] items-end overflow-hidden py-10 pb-14 text-white">
@@ -33,19 +35,19 @@ const Partners: InertiaComponent<{ businessTypes: Array<{ slug: string; name: st
                     }}
                 />
                 <div className="relative z-10 mx-auto w-[min(1180px,calc(100%-2rem))]">
-                    <div className="mb-3 text-[13px] font-bold tracking-[0.12em] text-brand-500 uppercase">
+                    <div className="text-brand-500 mb-3 text-[13px] font-bold tracking-[0.12em] uppercase">
                         Hotels, villas, camps &amp; operators
                     </div>
                     <h1 className="mb-3 max-w-[16ch] text-4xl text-white md:text-5xl">
                         List packages. Confirm requests. Collect on site.
                     </h1>
                     <p className="mb-7 max-w-[46ch] text-[17px] text-[#e8efe9]">
-                        Our team reviews your application. After approval you get a panel for offers,
-                        bookings and monthly 10% bills.
+                        Our team reviews your application. After approval you
+                        get a panel for offers, bookings and monthly 10% bills.
                     </p>
                     <Link
                         href="/partners/apply"
-                        className="inline-flex rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
+                        className="bg-brand-800 hover:bg-brand-900 inline-flex rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition"
                     >
                         Request to join
                     </Link>
@@ -54,12 +56,21 @@ const Partners: InertiaComponent<{ businessTypes: Array<{ slug: string; name: st
 
             <section className="py-14">
                 <div className="mx-auto w-[min(1180px,calc(100%-2rem))]">
-                    <h2 className="mb-5 text-3xl">Why partners use BookTrips</h2>
+                    <h2 className="mb-5 text-3xl">
+                        Why partners use BookTrips
+                    </h2>
                     <div className="grid gap-4.5 md:grid-cols-3">
                         {PERKS.map((perk, index) => (
-                            <div key={perk.title} className="rounded-2xl border border-line bg-white p-5.5">
-                                <span className="mb-2 block font-extrabold text-brand-800">0{index + 1}</span>
-                                <h3 className="mb-1.5 font-sans text-lg">{perk.title}</h3>
+                            <div
+                                key={perk.title}
+                                className="border-line rounded-2xl border bg-white p-5.5"
+                            >
+                                <span className="text-brand-800 mb-2 block font-extrabold">
+                                    0{index + 1}
+                                </span>
+                                <h3 className="mb-1.5 font-sans text-lg">
+                                    {perk.title}
+                                </h3>
                                 <p className="text-muted">{perk.text}</p>
                             </div>
                         ))}
@@ -69,20 +80,37 @@ const Partners: InertiaComponent<{ businessTypes: Array<{ slug: string; name: st
 
             <section className="bg-navy-900 py-16 text-[#e8efe9]">
                 <div className="mx-auto w-[min(1180px,calc(100%-2rem))]">
-                    <h2 className="mb-2.5 text-3xl text-white">How joining works</h2>
+                    <h2 className="mb-2.5 text-3xl text-white">
+                        How joining works
+                    </h2>
                     <div className="mt-7 grid gap-4.5 md:grid-cols-3">
                         {[
-                            ['01', 'Apply', 'Business details and social links. We need to see you are real.'],
-                            ['02', 'Wait for approval', 'Our team confirms the request. Then the panel unlocks.'],
+                            [
+                                '01',
+                                'Apply',
+                                'Business details and social links. We need to see you are real.',
+                            ],
+                            [
+                                '02',
+                                'Wait for approval',
+                                'Our team confirms the request. Then the panel unlocks.',
+                            ],
                             [
                                 '03',
                                 'Host & settle 10%',
                                 'Confirm bookings. After a stay is marked finished, 10% goes on your monthly bill — pay by bank transfer and upload the receipt.',
                             ],
                         ].map(([step, title, copy]) => (
-                            <div key={step} className="rounded-2xl bg-navy-800 p-5.5">
-                                <span className="mb-2 block font-extrabold text-brand-500">{step}</span>
-                                <h3 className="mb-1.5 font-sans text-lg text-white">{title}</h3>
+                            <div
+                                key={step}
+                                className="bg-navy-800 rounded-2xl p-5.5"
+                            >
+                                <span className="text-brand-500 mb-2 block font-extrabold">
+                                    {step}
+                                </span>
+                                <h3 className="mb-1.5 font-sans text-lg text-white">
+                                    {title}
+                                </h3>
                                 <p className="text-[#b7c4d1]">{copy}</p>
                             </div>
                         ))}
@@ -90,7 +118,7 @@ const Partners: InertiaComponent<{ businessTypes: Array<{ slug: string; name: st
                     <div className="mt-7">
                         <Link
                             href="/partners/apply"
-                            className="inline-flex rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
+                            className="bg-brand-800 hover:bg-brand-900 inline-flex rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition"
                         >
                             Request to join
                         </Link>

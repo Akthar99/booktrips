@@ -28,7 +28,11 @@ export default function Pagination({
     }
 
     if (lastPage <= 1) {
-        return <p className="my-4 text-[13px] text-muted">{total} result{total === 1 ? '' : 's'}</p>;
+        return (
+            <p className="text-muted my-4 text-[13px]">
+                {total} result{total === 1 ? '' : 's'}
+            </p>
+        );
     }
 
     const linkClass =
@@ -37,7 +41,7 @@ export default function Pagination({
 
     return (
         <div className="my-4 flex items-center justify-between gap-3">
-            <span className="text-[13px] text-muted">
+            <span className="text-muted text-[13px]">
                 Page {page} of {lastPage} · {total} results
             </span>
             <div className="flex gap-2">

@@ -79,11 +79,16 @@ const Analytics: InertiaComponent<AnalyticsProps> = ({ analytics }) => {
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">Analytics</h1>
             <p className="text-muted">
-                Where the money and the missed requests come from. Counts use booking creation dates.
+                Where the money and the missed requests come from. Counts use
+                booking creation dates.
             </p>
             <Tabs
                 items={[
-                    { label: 'Overview', href: '/partners/dashboard', exact: true },
+                    {
+                        label: 'Overview',
+                        href: '/partners/dashboard',
+                        exact: true,
+                    },
                     { label: 'Reservations', href: '/partners/bookings' },
                     { label: 'Analytics', href: '/partners/analytics' },
                     { label: 'Finance', href: '/partners/payments' },
@@ -113,7 +118,7 @@ const Analytics: InertiaComponent<AnalyticsProps> = ({ analytics }) => {
                 {from || to ? (
                     <button
                         type="button"
-                        className="cursor-pointer rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-bold text-brand-900"
+                        className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-3.5 py-2 text-[13px] font-bold"
                         onClick={() => {
                             setFrom('');
                             setTo('');
@@ -134,71 +139,104 @@ const Analytics: InertiaComponent<AnalyticsProps> = ({ analytics }) => {
                     ['Completed', summary.completed],
                     ['Confirmation rate', `${summary.confirmation_rate}%`],
                     ['Guests hosted', summary.guests],
-                    ['Avg finished booking', lkr(summary.average_completed_lkr)],
+                    [
+                        'Avg finished booking',
+                        lkr(summary.average_completed_lkr),
+                    ],
                 ].map(([label, value]) => (
-                    <div key={label as string} className="rounded-2xl border border-line bg-white p-4.5">
-                        <span className="text-[13px] font-bold text-muted">{label}</span>
-                        <strong className="block font-display text-2xl">{value}</strong>
+                    <div
+                        key={label as string}
+                        className="border-line rounded-2xl border bg-white p-4.5"
+                    >
+                        <span className="text-muted text-[13px] font-bold">
+                            {label}
+                        </span>
+                        <strong className="font-display block text-2xl">
+                            {value}
+                        </strong>
                     </div>
                 ))}
             </div>
 
             <h3 className="mb-2 font-sans text-lg font-bold">Monthly income</h3>
             {monthly.length ? (
-                <div className="grid grid-cols-6 items-end gap-2 rounded-[14px] bg-cream-dark px-3 pt-4.5 pb-2.5 md:grid-cols-12">
+                <div className="bg-cream-dark grid grid-cols-6 items-end gap-2 rounded-[14px] px-3 pt-4.5 pb-2.5 md:grid-cols-12">
                     {chartMonths.map((month) => (
-                        <div key={month.period} className="flex h-40 flex-col items-center justify-end gap-1.5">
+                        <div
+                            key={month.period}
+                            className="flex h-40 flex-col items-center justify-end gap-1.5"
+                        >
                             <div
-                                className="w-full max-w-[34px] rounded-t-[7px] bg-brand-600"
-                                style={{ height: `${Math.max((month.income_lkr / maxIncome) * 100, 4)}%` }}
+                                className="bg-brand-600 w-full max-w-[34px] rounded-t-[7px]"
+                                style={{
+                                    height: `${Math.max((month.income_lkr / maxIncome) * 100, 4)}%`,
+                                }}
                             />
-                            <span className="text-[10px] font-extrabold text-brand-900">
-                                {month.income_lkr ? lkr(month.income_lkr).replace('Rs. ', '') : ''}
+                            <span className="text-brand-900 text-[10px] font-extrabold">
+                                {month.income_lkr
+                                    ? lkr(month.income_lkr).replace('Rs. ', '')
+                                    : ''}
                             </span>
-                            <strong className="text-[10px] whitespace-nowrap text-muted">{month.period}</strong>
+                            <strong className="text-muted text-[10px] whitespace-nowrap">
+                                {month.period}
+                            </strong>
                         </div>
                     ))}
                 </div>
             ) : (
-                <p className="text-muted">No booking activity in this range yet.</p>
+                <p className="text-muted">
+                    No booking activity in this range yet.
+                </p>
             )}
 
-            <h3 className="mt-7 mb-2 font-sans text-lg font-bold">Package performance</h3>
-            <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+            <h3 className="mt-7 mb-2 font-sans text-lg font-bold">
+                Package performance
+            </h3>
+            <div className="border-line overflow-x-auto rounded-2xl border bg-white">
                 <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="bg-cream-dark text-[11px] tracking-wide text-muted uppercase">
+                        <tr className="bg-cream-dark text-muted text-[11px] tracking-wide uppercase">
                             <th className="px-3.5 py-3 font-bold">Package</th>
                             <th className="px-3.5 py-3 font-bold">Bookings</th>
                             <th className="px-3.5 py-3 font-bold">Guests</th>
                             <th className="px-3.5 py-3 font-bold">Income</th>
-                            <th className="px-3.5 py-3 font-bold">Conversion</th>
+                            <th className="px-3.5 py-3 font-bold">
+                                Conversion
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {packages.map((row) => (
-                            <tr key={row.id} className="border-t border-line">
+                            <tr key={row.id} className="border-line border-t">
                                 <td className="px-3.5 py-3 text-sm">
                                     {row.title}
-                                    <div className="text-xs text-muted">
-                                        {row.category} · {row.active ? 'live' : 'hidden'}
+                                    <div className="text-muted text-xs">
+                                        {row.category} ·{' '}
+                                        {row.active ? 'live' : 'hidden'}
                                     </div>
                                 </td>
                                 <td className="px-3.5 py-3 text-sm">
                                     {row.bookings}
-                                    <div className="text-xs text-muted">
-                                        {row.requested} requested · {row.confirmed} confirmed · {row.completed}{' '}
-                                        finished · {row.rejected} rejected
+                                    <div className="text-muted text-xs">
+                                        {row.requested} requested ·{' '}
+                                        {row.confirmed} confirmed ·{' '}
+                                        {row.completed} finished ·{' '}
+                                        {row.rejected} rejected
                                     </div>
                                 </td>
-                                <td className="px-3.5 py-3 text-sm">{row.guests}</td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {row.guests}
+                                </td>
                                 <td className="px-3.5 py-3 text-sm">
                                     {lkr(row.income_lkr)}
-                                    <div className="text-xs text-muted">
-                                        {lkr(row.potential_income_lkr)} potential
+                                    <div className="text-muted text-xs">
+                                        {lkr(row.potential_income_lkr)}{' '}
+                                        potential
                                     </div>
                                 </td>
-                                <td className="px-3.5 py-3 text-sm">{row.confirmation_rate}%</td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {row.confirmation_rate}%
+                                </td>
                             </tr>
                         ))}
                     </tbody>

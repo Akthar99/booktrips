@@ -37,8 +37,15 @@ type AdminPaymentsProps = {
     receipts: AdminReceipt[];
 };
 
-const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipts, summary }) => {
-    const [pending, setPending] = useState<{ receipt: AdminReceipt; status: string } | null>(null);
+const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({
+    invoices,
+    receipts,
+    summary,
+}) => {
+    const [pending, setPending] = useState<{
+        receipt: AdminReceipt;
+        status: string;
+    } | null>(null);
     const [busy, setBusy] = useState(false);
 
     function review(receiptId: number, status: string) {
@@ -71,18 +78,27 @@ const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipt
                     ['Overdue', lkr(summary.overdue_lkr)],
                     ['Receipts to review', String(summary.pending_receipts)],
                 ].map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-line bg-white p-4">
-                        <span className="text-[12px] font-bold text-muted">{label}</span>
-                        <strong className="block font-display text-[22px]">{value}</strong>
+                    <div
+                        key={label}
+                        className="border-line rounded-2xl border bg-white p-4"
+                    >
+                        <span className="text-muted text-[12px] font-bold">
+                            {label}
+                        </span>
+                        <strong className="font-display block text-[22px]">
+                            {value}
+                        </strong>
                     </div>
                 ))}
             </div>
             <h2 className="mb-3 text-2xl">Payment receipts</h2>
-            <p className="mb-3 text-muted">Confirm a transfer to mark that invoice paid.</p>
-            <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+            <p className="text-muted mb-3">
+                Confirm a transfer to mark that invoice paid.
+            </p>
+            <div className="border-line overflow-x-auto rounded-2xl border bg-white">
                 <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="bg-cream-dark text-[11px] tracking-wide text-muted uppercase">
+                        <tr className="bg-cream-dark text-muted text-[11px] tracking-wide uppercase">
                             <th className="px-3.5 py-3 font-bold">When</th>
                             <th className="px-3.5 py-3 font-bold">Partner</th>
                             <th className="px-3.5 py-3 font-bold">Period</th>
@@ -94,14 +110,25 @@ const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipt
                     </thead>
                     <tbody>
                         {receipts.map((receipt) => (
-                            <tr key={receipt.id} className="border-t border-line">
-                                <td className="px-3.5 py-3 text-sm">{formatDateTime(receipt.created_at)}</td>
-                                <td className="px-3.5 py-3 text-sm">{receipt.business_name}</td>
-                                <td className="px-3.5 py-3 text-sm">{receipt.period}</td>
-                                <td className="px-3.5 py-3 text-sm">{lkr(receipt.amount_lkr)}</td>
+                            <tr
+                                key={receipt.id}
+                                className="border-line border-t"
+                            >
+                                <td className="px-3.5 py-3 text-sm">
+                                    {formatDateTime(receipt.created_at)}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {receipt.business_name}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {receipt.period}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {lkr(receipt.amount_lkr)}
+                                </td>
                                 <td className="px-3.5 py-3 text-sm">
                                     <a
-                                        className="font-bold text-brand-800"
+                                        className="text-brand-800 font-bold"
                                         href={receipt.file_url}
                                         target="_blank"
                                         rel="noreferrer"
@@ -117,15 +144,25 @@ const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipt
                                         <>
                                             <button
                                                 type="button"
-                                                className="cursor-pointer rounded-full bg-brand-800 px-3 py-1.5 text-[13px] font-bold text-white transition hover:bg-brand-900"
-                                                onClick={() => setPending({ receipt, status: 'confirmed' })}
+                                                className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-3 py-1.5 text-[13px] font-bold text-white transition"
+                                                onClick={() =>
+                                                    setPending({
+                                                        receipt,
+                                                        status: 'confirmed',
+                                                    })
+                                                }
                                             >
                                                 Confirm
                                             </button>
                                             <button
                                                 type="button"
-                                                className="ml-2 cursor-pointer rounded-full border border-red-200 bg-white px-3 py-1.5 text-[13px] font-bold text-danger transition hover:border-red-400"
-                                                onClick={() => setPending({ receipt, status: 'rejected' })}
+                                                className="text-danger ml-2 cursor-pointer rounded-full border border-red-200 bg-white px-3 py-1.5 text-[13px] font-bold transition hover:border-red-400"
+                                                onClick={() =>
+                                                    setPending({
+                                                        receipt,
+                                                        status: 'rejected',
+                                                    })
+                                                }
                                             >
                                                 Reject
                                             </button>
@@ -138,21 +175,31 @@ const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipt
                 </table>
             </div>
 
-            <h3 className="mt-7 mb-2 font-sans text-lg font-bold">Open invoices</h3>
-            {outstanding.length === 0 ? <p className="text-muted">No outstanding bills.</p> : null}
+            <h3 className="mt-7 mb-2 font-sans text-lg font-bold">
+                Open invoices
+            </h3>
+            {outstanding.length === 0 ? (
+                <p className="text-muted">No outstanding bills.</p>
+            ) : null}
             <div className="grid gap-3">
                 {outstanding.map((invoice) => (
-                    <div key={invoice.id} className="rounded-[14px] border border-line bg-white px-4 py-3.5">
+                    <div
+                        key={invoice.id}
+                        className="border-line rounded-[14px] border bg-white px-4 py-3.5"
+                    >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                             <div>
                                 <strong>{invoice.business_name}</strong>
-                                <div className="text-[13px] text-muted">
-                                    {invoice.period_label} · due {invoice.due_date} · {invoice.receipts.length}{' '}
-                                    receipts
+                                <div className="text-muted text-[13px]">
+                                    {invoice.period_label} · due{' '}
+                                    {invoice.due_date} ·{' '}
+                                    {invoice.receipts.length} receipts
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className="font-extrabold text-brand-900">{lkr(invoice.amount_lkr)}</span>
+                                <span className="text-brand-900 font-extrabold">
+                                    {lkr(invoice.amount_lkr)}
+                                </span>
                                 <StatusBadge status={invoice.status} />
                             </div>
                         </div>
@@ -162,16 +209,26 @@ const AdminPayments: InertiaComponent<AdminPaymentsProps> = ({ invoices, receipt
 
             <ConfirmDialog
                 open={pending !== null}
-                title={pending?.status === 'confirmed' ? 'Confirm this receipt?' : 'Reject this receipt?'}
+                title={
+                    pending?.status === 'confirmed'
+                        ? 'Confirm this receipt?'
+                        : 'Reject this receipt?'
+                }
                 message={
                     pending?.status === 'confirmed'
                         ? 'This will mark the invoice as paid.'
                         : 'This will reopen the invoice so the partner can submit another receipt.'
                 }
-                confirmLabel={pending?.status === 'confirmed' ? 'Confirm payment' : 'Reject receipt'}
+                confirmLabel={
+                    pending?.status === 'confirmed'
+                        ? 'Confirm payment'
+                        : 'Reject receipt'
+                }
                 danger={pending?.status === 'rejected'}
                 busy={busy}
-                onConfirm={() => pending && review(pending.receipt.id, pending.status)}
+                onConfirm={() =>
+                    pending && review(pending.receipt.id, pending.status)
+                }
                 onCancel={() => setPending(null)}
             />
         </div>

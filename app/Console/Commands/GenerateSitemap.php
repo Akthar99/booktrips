@@ -27,6 +27,8 @@ class GenerateSitemap extends Command
             $this->entry(route('map'), 'weekly', '0.7'),
             $this->entry(route('partners'), 'monthly', '0.6'),
             $this->entry(route('about'), 'monthly', '0.5'),
+            $this->entry(route('privacy'), 'yearly', '0.3'),
+            $this->entry(route('terms'), 'yearly', '0.3'),
         ];
 
         $count = 0;

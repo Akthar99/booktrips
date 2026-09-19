@@ -15,7 +15,13 @@ const TONES: Record<string, string> = {
     approved: 'bg-brand-100 text-brand-950',
 };
 
-export default function StatusBadge({ status, className }: { status: string; className?: string }) {
+export default function StatusBadge({
+    status,
+    className,
+}: {
+    status: string;
+    className?: string;
+}) {
     return (
         <span
             className={cn(

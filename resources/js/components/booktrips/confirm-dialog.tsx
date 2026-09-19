@@ -44,7 +44,7 @@ export default function ConfirmDialog({
 
     return (
         <div
-            className="fixed inset-0 z-[120] flex items-center justify-center bg-navy-950/45 p-5"
+            className="bg-navy-950/45 fixed inset-0 z-[120] flex items-center justify-center p-5"
             role="presentation"
             onMouseDown={(event) => {
                 if (event.target === event.currentTarget && !busy) {
@@ -53,7 +53,7 @@ export default function ConfirmDialog({
             }}
         >
             <div
-                className="w-full max-w-[420px] rounded-[18px] border border-line bg-white p-6 shadow-[0_24px_70px_rgba(7,18,33,0.2)]"
+                className="border-line w-full max-w-[420px] rounded-[18px] border bg-white p-6 shadow-[0_24px_70px_rgba(7,18,33,0.2)]"
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="confirm-title"
@@ -61,12 +61,20 @@ export default function ConfirmDialog({
                 <h2 id="confirm-title" className="mb-2 text-2xl">
                     {title}
                 </h2>
-                <p className="text-sm text-muted">{message}</p>
+                <p className="text-muted text-sm">{message}</p>
                 <div className="mt-5 flex justify-end gap-2">
-                    <Button variant="outline" onClick={onCancel} disabled={busy}>
+                    <Button
+                        variant="outline"
+                        onClick={onCancel}
+                        disabled={busy}
+                    >
                         {cancelLabel}
                     </Button>
-                    <Button variant={danger ? 'danger' : 'primary'} onClick={onConfirm} disabled={busy}>
+                    <Button
+                        variant={danger ? 'danger' : 'primary'}
+                        onClick={onConfirm}
+                        disabled={busy}
+                    >
                         {busy ? 'Please wait…' : confirmLabel}
                     </Button>
                 </div>

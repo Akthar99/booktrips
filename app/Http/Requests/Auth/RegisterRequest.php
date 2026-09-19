@@ -19,6 +19,17 @@ class RegisterRequest extends FormRequest
             'email' => ['required', 'string', 'email:rfc', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:40'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'terms' => ['accepted'],
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'terms.accepted' => 'Please accept the Terms of Service and the Privacy Policy to create an account.',
         ];
     }
 

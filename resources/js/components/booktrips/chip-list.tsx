@@ -34,7 +34,7 @@ export default function ChipList({
                 {list.map((item) => (
                     <button
                         type="button"
-                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white px-2.5 py-1.5 text-[13px] font-semibold"
+                        className="border-line inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-white px-2.5 py-1.5 text-[13px] font-semibold"
                         key={item}
                         onClick={() => onChange(list.filter((x) => x !== item))}
                     >
@@ -54,7 +54,12 @@ export default function ChipList({
                         }
                     }}
                 />
-                <Button variant="outline" size="sm" onClick={add} className="shrink-0">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={add}
+                    className="shrink-0"
+                >
                     Add
                 </Button>
             </div>

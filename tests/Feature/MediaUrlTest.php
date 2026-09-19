@@ -27,12 +27,49 @@ it('resolves legacy storage paths, bare keys and absolute urls', function () {
         ->and($media->url(null))->toBeNull();
 });
 
+it('rescues scheme-less paths written while AWS_URL was blank', function () {
+    // A blank `AWS_URL=` in the environment made Flysystem return
+    // "/packages/..." for every upload — those rows must still resolve.
+    $media = app(MediaUrl::class);
+
+    expect($media->url('/packages/9/photo.jpg'))
+        ->toBe('https://booktips-bucket.s3.ap-southeast-1.amazonaws.com/packages/9/photo.jpg')
+        ->and($media->url('/receipts/9/slip.pdf'))
+        ->toBe('https://booktips-bucket.s3.ap-southeast-1.amazonaws.com/receipts/9/slip.pdf')
+        ->and($media->url('/img/logo.png'))
+        ->toBe('/img/logo.png');
+});
+
+it('rewrites localhost and app-domain urls onto the current disk', function () {
+    config(['app.url' => 'https://booktrips.lk']);
+
+    $media = app(MediaUrl::class);
+
+    expect($media->url('http://localhost:8000/storage/packages/3/old.jpg'))
+        ->toBe('https://booktips-bucket.s3.ap-southeast-1.amazonaws.com/packages/3/old.jpg')
+        ->and($media->url('https://booktrips.lk/storage/packages/3/old.jpg'))
+        ->toBe('https://booktips-bucket.s3.ap-southeast-1.amazonaws.com/packages/3/old.jpg');
+});
+
+it('never lets a blank AWS_URL produce scheme-less urls', function () {
+    // phpunit.xml pins AWS_URL to an empty string: the config must turn that
+    // into null, otherwise Flysystem returns "/packages/..." paths.
+    $diskConfig = require config_path('filesystems.php');
+
+    expect(env('AWS_URL'))->toBe('')
+        ->and($diskConfig['disks']['s3']['url'])->toBeNull();
+});
+
 it('only extracts keys for objects it owns', function () {
     $media = app(MediaUrl::class);
 
     expect($media->key('https://booktips-bucket.s3.ap-southeast-1.amazonaws.com/packages/3/old.jpg'))
         ->toBe('packages/3/old.jpg')
         ->and($media->key('/storage/packages/3/old.jpg'))
+        ->toBe('packages/3/old.jpg')
+        ->and($media->key('/packages/3/old.jpg'))
+        ->toBe('packages/3/old.jpg')
+        ->and($media->key('http://localhost:8000/storage/packages/3/old.jpg'))
         ->toBe('packages/3/old.jpg')
         ->and($media->key('https://example.com/external.jpg'))
         ->toBeNull()

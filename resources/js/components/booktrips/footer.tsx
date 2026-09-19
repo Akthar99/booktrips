@@ -39,23 +39,41 @@ export default function Footer() {
                 <div>
                     <Logo light />
                     <p className="mt-3 max-w-80">
-                        Day outs, camping nights, villas and activity packages across Sri Lanka. Pay when you arrive.
+                        Day outs, camping nights, villas and activity packages
+                        across Sri Lanka. Pay when you arrive.
                     </p>
                 </div>
                 {COLUMNS.map((column) => (
                     <div key={column.heading}>
-                        <h4 className="mb-3 font-sans text-white">{column.heading}</h4>
+                        <h4 className="mb-3 font-sans text-white">
+                            {column.heading}
+                        </h4>
                         {column.links.map(([label, href]) => (
-                            <Link key={href + label} href={href} className="block py-1 hover:text-white">
+                            <Link
+                                key={href + label}
+                                href={href}
+                                className="block py-1 hover:text-white"
+                            >
                                 {label}
                             </Link>
                         ))}
                     </div>
                 ))}
             </div>
-            <div className="mx-auto flex w-[min(1180px,calc(100%-2rem))] justify-between gap-3 border-t border-navy-700 pt-4">
-                <span>© {new Date().getFullYear()} BookTrips. Made for exploring Sri Lanka.</span>
-                <span>Pay at destination only</span>
+            <div className="border-navy-700 mx-auto flex w-[min(1180px,calc(100%-2rem))] flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t pt-4">
+                <span>
+                    © {new Date().getFullYear()} BookTrips. Made for exploring
+                    Sri Lanka.
+                </span>
+                <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <Link href="/privacy" className="hover:text-white">
+                        Privacy Policy
+                    </Link>
+                    <Link href="/terms" className="hover:text-white">
+                        Terms of Service
+                    </Link>
+                    <span>Pay at destination only</span>
+                </span>
             </div>
         </footer>
     );

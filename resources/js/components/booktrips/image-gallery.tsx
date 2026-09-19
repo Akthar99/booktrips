@@ -23,7 +23,10 @@ export default function ImageGallery({
 
     const go = useCallback(
         (delta: number) => {
-            setIndex((current) => (current + delta + gallery.length) % gallery.length);
+            setIndex(
+                (current) =>
+                    (current + delta + gallery.length) % gallery.length,
+            );
         },
         [gallery.length],
     );
@@ -67,7 +70,9 @@ export default function ImageGallery({
             return;
         }
 
-        const delta = (event.changedTouches[0]?.clientX ?? touchStart.current) - touchStart.current;
+        const delta =
+            (event.changedTouches[0]?.clientX ?? touchStart.current) -
+            touchStart.current;
         touchStart.current = null;
 
         if (Math.abs(delta) > 45) {
@@ -80,19 +85,25 @@ export default function ImageGallery({
             <div className="relative grid min-h-[280px] cursor-pointer grid-cols-1 gap-2 overflow-hidden rounded-[20px] md:min-h-[420px] md:grid-cols-[2fr_1fr]">
                 <button
                     type="button"
-                    className="group relative block h-full w-full cursor-pointer border-0 bg-cream-dark p-0"
+                    className="group bg-cream-dark relative block h-full w-full cursor-pointer border-0 p-0"
                     onClick={() => openAt(0)}
                     aria-label="Open photo viewer"
                 >
-                    <img src={gallery[0]} alt={title} className="h-full w-full object-cover" />
+                    <img
+                        src={gallery[0]}
+                        alt={title}
+                        className="h-full w-full object-cover"
+                    />
                 </button>
                 <div className="grid gap-2">
                     {[1, 2].map((position) => (
                         <button
                             key={position}
                             type="button"
-                            className="relative block h-full w-full cursor-pointer border-0 bg-cream-dark p-0"
-                            onClick={() => openAt(Math.min(position, gallery.length - 1))}
+                            className="bg-cream-dark relative block h-full w-full cursor-pointer border-0 p-0"
+                            onClick={() =>
+                                openAt(Math.min(position, gallery.length - 1))
+                            }
                             aria-label="Open photo viewer"
                         >
                             <img
@@ -105,7 +116,7 @@ export default function ImageGallery({
                 </div>
                 <button
                     type="button"
-                    className="absolute right-3 bottom-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 text-[13px] font-bold text-brand-900 shadow-card"
+                    className="text-brand-900 shadow-card absolute right-3 bottom-3 inline-flex cursor-pointer items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 text-[13px] font-bold"
                     onClick={() => openAt(0)}
                 >
                     <Expand size={15} />
@@ -183,7 +194,11 @@ export default function ImageGallery({
                                 onClick={() => setIndex(position)}
                                 aria-label={`Show photo ${position + 1}`}
                             >
-                                <img src={image} alt="" className="h-full w-full object-cover" />
+                                <img
+                                    src={image}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                />
                             </button>
                         ))}
                     </div>

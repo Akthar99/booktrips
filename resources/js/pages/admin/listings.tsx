@@ -29,13 +29,20 @@ type ListingsProps = {
     filters: { q: string };
 };
 
-const AdminListings: InertiaComponent<ListingsProps> = ({ packages, filters }) => {
+const AdminListings: InertiaComponent<ListingsProps> = ({
+    packages,
+    filters,
+}) => {
     const [q, setQ] = useState(filters.q);
     const [unlistTarget, setUnlistTarget] = useState<ListingRow | null>(null);
     const [busy, setBusy] = useState(false);
 
     function load() {
-        router.get('/admin/listings', { q: q || undefined }, { preserveState: true, preserveScroll: true });
+        router.get(
+            '/admin/listings',
+            { q: q || undefined },
+            { preserveState: true, preserveScroll: true },
+        );
     }
 
     function patch(id: number, body: Record<string, boolean>) {
@@ -68,55 +75,82 @@ const AdminListings: InertiaComponent<ListingsProps> = ({ packages, filters }) =
                 />
                 <button
                     type="submit"
-                    className="cursor-pointer rounded-full bg-brand-800 px-4 py-2 text-[13px] font-bold text-white transition hover:bg-brand-900"
+                    className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-4 py-2 text-[13px] font-bold text-white transition"
                 >
                     Search
                 </button>
             </form>
-            <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+            <div className="border-line overflow-x-auto rounded-2xl border bg-white">
                 <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="bg-cream-dark text-[11px] tracking-wide text-muted uppercase">
+                        <tr className="bg-cream-dark text-muted text-[11px] tracking-wide uppercase">
                             <th className="px-3.5 py-3 font-bold">Package</th>
                             <th className="px-3.5 py-3 font-bold">Business</th>
                             <th className="px-3.5 py-3 font-bold">Place</th>
                             <th className="px-3.5 py-3 font-bold">Price</th>
                             <th className="px-3.5 py-3 font-bold">Live</th>
                             <th className="px-3.5 py-3 font-bold">Featured</th>
-                            <th className="px-3.5 py-3 text-right font-bold">Actions</th>
+                            <th className="px-3.5 py-3 text-right font-bold">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {packages.data.map((pkg) => (
-                            <tr key={pkg.id} className="border-t border-line">
+                            <tr key={pkg.id} className="border-line border-t">
                                 <td className="px-3.5 py-3 text-sm">
-                                    <Link className="font-bold text-brand-800" href={`/packages/${pkg.slug || pkg.id}`}>
+                                    <Link
+                                        className="text-brand-800 font-bold"
+                                        href={`/packages/${pkg.slug || pkg.id}`}
+                                    >
                                         {pkg.title}
                                     </Link>
-                                    <div className="text-xs text-muted">{pkg.category}</div>
+                                    <div className="text-muted text-xs">
+                                        {pkg.category}
+                                    </div>
                                 </td>
-                                <td className="px-3.5 py-3 text-sm">{pkg.business_name}</td>
-                                <td className="px-3.5 py-3 text-sm">{pkg.location}</td>
-                                <td className="px-3.5 py-3 text-sm">{lkr(pkg.price_lkr)}</td>
-                                <td className="px-3.5 py-3 text-sm">{pkg.active ? 'Yes' : 'No'}</td>
-                                <td className="px-3.5 py-3 text-sm">{pkg.featured ? 'Yes' : 'No'}</td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {pkg.business_name}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {pkg.location}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {lkr(pkg.price_lkr)}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {pkg.active ? 'Yes' : 'No'}
+                                </td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {pkg.featured ? 'Yes' : 'No'}
+                                </td>
                                 <td className="px-3.5 py-3 text-right whitespace-nowrap">
                                     <button
                                         type="button"
                                         className={
                                             'cursor-pointer border-0 bg-transparent text-[13px] font-bold hover:underline ' +
-                                            (pkg.active ? 'text-danger' : 'text-brand-800')
+                                            (pkg.active
+                                                ? 'text-danger'
+                                                : 'text-brand-800')
                                         }
                                         onClick={() =>
-                                            pkg.active ? setUnlistTarget(pkg) : patch(pkg.id, { active: true })
+                                            pkg.active
+                                                ? setUnlistTarget(pkg)
+                                                : patch(pkg.id, {
+                                                      active: true,
+                                                  })
                                         }
                                     >
                                         {pkg.active ? 'Unlist' : 'List'}
                                     </button>
                                     <button
                                         type="button"
-                                        className="ml-3.5 cursor-pointer border-0 bg-transparent text-[13px] font-bold text-brand-800 hover:underline"
-                                        onClick={() => patch(pkg.id, { featured: !pkg.featured })}
+                                        className="text-brand-800 ml-3.5 cursor-pointer border-0 bg-transparent text-[13px] font-bold hover:underline"
+                                        onClick={() =>
+                                            patch(pkg.id, {
+                                                featured: !pkg.featured,
+                                            })
+                                        }
                                     >
                                         {pkg.featured ? 'Unfeature' : 'Feature'}
                                     </button>
@@ -126,7 +160,11 @@ const AdminListings: InertiaComponent<ListingsProps> = ({ packages, filters }) =
                     </tbody>
                 </table>
             </div>
-            <Pagination page={packages.current_page} lastPage={packages.last_page} total={packages.total} />
+            <Pagination
+                page={packages.current_page}
+                lastPage={packages.last_page}
+                total={packages.total}
+            />
 
             <ConfirmDialog
                 open={unlistTarget !== null}
@@ -135,7 +173,9 @@ const AdminListings: InertiaComponent<ListingsProps> = ({ packages, filters }) =
                 confirmLabel="Unlist package"
                 danger
                 busy={busy}
-                onConfirm={() => unlistTarget && patch(unlistTarget.id, { active: false })}
+                onConfirm={() =>
+                    unlistTarget && patch(unlistTarget.id, { active: false })
+                }
                 onCancel={() => setUnlistTarget(null)}
             />
         </div>

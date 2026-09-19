@@ -16,6 +16,7 @@ it('registers a traveller, signs them in and asks for verification', function ()
         'phone' => '0771234567',
         'password' => 'ExploreLK123!',
         'password_confirmation' => 'ExploreLK123!',
+        'terms' => true,
     ]);
 
     $response->assertRedirect(route('verification.notice'));
@@ -37,11 +38,23 @@ it('never lets a visitor choose the role during registration', function () {
         'email' => 'sneaky@example.com',
         'password' => 'ExploreLK123!',
         'password_confirmation' => 'ExploreLK123!',
+        'terms' => true,
         'role' => 'admin',
         'active' => true,
     ]);
 
     expect(User::query()->where('email', 'sneaky@example.com')->firstOrFail()->role)->toBe(UserRole::User);
+});
+
+it('refuses a registration that does not accept the terms and privacy policy', function () {
+    $this->post('/register', [
+        'name' => 'No Terms',
+        'email' => 'noterms@example.com',
+        'password' => 'ExploreLK123!',
+        'password_confirmation' => 'ExploreLK123!',
+    ])->assertSessionHasErrors('terms');
+
+    expect(User::query()->where('email', 'noterms@example.com')->exists())->toBeFalse();
 });
 
 it('rejects weak passwords and duplicate emails', function () {
@@ -52,6 +65,7 @@ it('rejects weak passwords and duplicate emails', function () {
         'email' => 'weak@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'terms' => true,
     ]);
 
     $weak->assertSessionHasErrors('password');
@@ -61,6 +75,7 @@ it('rejects weak passwords and duplicate emails', function () {
         'email' => 'taken@example.com',
         'password' => 'ExploreLK123!',
         'password_confirmation' => 'ExploreLK123!',
+        'terms' => true,
     ]);
 
     $duplicate->assertSessionHasErrors('email');

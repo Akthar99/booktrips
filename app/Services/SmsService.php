@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SendSms;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,25 @@ class SmsService
     public function configured(): bool
     {
         return is_string(config('booktrips.sms.api_key')) && config('booktrips.sms.api_key') !== '';
+    }
+
+    /**
+     * Queue a message so the triggering request never waits on the gateway.
+     *
+     * Use send() only when the user is actively waiting for the message
+     * (one-time codes); everything else belongs here.
+     */
+    public function queue(?string $recipient, ?string $message): void
+    {
+        if ($recipient === null || $recipient === '' || $message === null || $message === '') {
+            return;
+        }
+
+        try {
+            dispatch(new SendSms($recipient, $message));
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     /**

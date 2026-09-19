@@ -97,19 +97,20 @@ export const CATEGORY_LABELS: Record<string, string> = {
     wellness: 'Wellness',
 };
 
+// Keyed by the `icon` name sent with each category (see config/booktrips.php).
 export const CATEGORY_ICONS: Record<string, LucideIcon> = {
-    camping: Tent,
-    dayout: Sun,
-    activities: Compass,
-    hotels: Hotel,
-    villas: Home,
-    hiking: Mountain,
-    beach: Waves,
-    wildlife: Binoculars,
-    adventure: Zap,
-    cultural: Landmark,
-    watersports: Sailboat,
-    wellness: Flower,
+    tent: Tent,
+    sun: Sun,
+    compass: Compass,
+    hotel: Hotel,
+    home: Home,
+    mountain: Mountain,
+    waves: Waves,
+    binoculars: Binoculars,
+    zap: Zap,
+    landmark: Landmark,
+    sailboat: Sailboat,
+    flower: Flower,
 };
 
 export const WEEKDAYS = [

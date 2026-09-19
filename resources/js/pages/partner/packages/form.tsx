@@ -62,7 +62,12 @@ type FormProps = {
     package: PackagePayload | null;
     categories: Array<{ slug: string; name: string }>;
     categoryDefaults: Record<string, CategoryDefault>;
-    business: { name: string; city: string; district: string | null; type: string };
+    business: {
+        name: string;
+        city: string;
+        district: string | null;
+        type: string;
+    };
 };
 
 function defaultForm(business: FormProps['business']): PackagePayload {
@@ -97,24 +102,36 @@ function defaultForm(business: FormProps['business']): PackagePayload {
         amenities: [],
         images: [],
         meeting_point: '',
-        cancellation_policy: 'Free cancellation up to 48 hours before the start time.',
+        cancellation_policy:
+            'Free cancellation up to 48 hours before the start time.',
         active: true,
     };
 }
 
-const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categories, categoryDefaults, business }) => {
+const PackageForm: InertiaComponent<FormProps> = ({
+    package: existing,
+    categories,
+    categoryDefaults,
+    business,
+}) => {
     const editing = Boolean(existing?.id);
     const [uploadError, setUploadError] = useState('');
     const [uploading, setUploading] = useState(false);
 
     const form = useForm<PackagePayload>(existing ?? defaultForm(business));
 
-    function set<K extends keyof PackagePayload>(key: K, value: PackagePayload[K]) {
+    function set<K extends keyof PackagePayload>(
+        key: K,
+        value: PackagePayload[K],
+    ) {
         form.setData((data) => ({ ...data, [key]: value }));
     }
 
     function onCategory(slug: string) {
-        const defaults = categoryDefaults[slug] ?? { included: [], excluded: [] };
+        const defaults = categoryDefaults[slug] ?? {
+            included: [],
+            excluded: [],
+        };
         form.setData((data) => ({
             ...data,
             category: slug,
@@ -138,7 +155,10 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
         let size = 0;
 
         for (const file of files) {
-            if (batch.length >= 6 || size + file.size > MAX_BATCH_MB * 1024 * 1024) {
+            if (
+                batch.length >= 6 ||
+                size + file.size > MAX_BATCH_MB * 1024 * 1024
+            ) {
                 if (batch.length) {
                     batches.push(batch);
                 }
@@ -167,16 +187,22 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
 
         if (!files.length) {
             if (selected.length) {
-                setUploadError(`You can have ${MAX_PHOTOS} photos per package at most.`);
+                setUploadError(
+                    `You can have ${MAX_PHOTOS} photos per package at most.`,
+                );
             }
 
             return;
         }
 
-        const tooBig = files.find((file) => file.size > MAX_PHOTO_MB * 1024 * 1024);
+        const tooBig = files.find(
+            (file) => file.size > MAX_PHOTO_MB * 1024 * 1024,
+        );
 
         if (tooBig) {
-            setUploadError(`${tooBig.name} is larger than ${MAX_PHOTO_MB} MB. Please resize it and try again.`);
+            setUploadError(
+                `${tooBig.name} is larger than ${MAX_PHOTO_MB} MB. Please resize it and try again.`,
+            );
 
             return;
         }
@@ -185,7 +211,10 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
         setUploadError('');
 
         const appendImages = (urls: string[]) =>
-            form.setData((data) => ({ ...data, images: [...(data.images ?? []), ...urls] }));
+            form.setData((data) => ({
+                ...data,
+                images: [...(data.images ?? []), ...urls],
+            }));
 
         try {
             for (const batch of uploadBatches(files)) {
@@ -215,7 +244,11 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                 };
 
                 if (!response.ok) {
-                    setUploadError(data.message ?? Object.values(data.errors ?? {}).flat()[0] ?? 'Upload failed.');
+                    setUploadError(
+                        data.message ??
+                            Object.values(data.errors ?? {}).flat()[0] ??
+                            'Upload failed.',
+                    );
 
                     break;
                 }
@@ -231,7 +264,10 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
 
     function submit(event: React.FormEvent) {
         event.preventDefault();
-        form.transform((data) => ({ ...data, price_lkr: Number(data.price_lkr) }));
+        form.transform((data) => ({
+            ...data,
+            price_lkr: Number(data.price_lkr),
+        }));
 
         if (editing && existing?.id) {
             form.put(packageUpdate.url(existing.id));
@@ -247,12 +283,14 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
 
     return (
         <div className="mx-auto w-[min(720px,calc(100%-2rem))] py-7 pb-14">
-            <h1 className="text-4xl">{editing ? 'Edit package' : 'New package'}</h1>
+            <h1 className="text-4xl">
+                {editing ? 'Edit package' : 'New package'}
+            </h1>
             {firstError ? <Alert tone="error">{firstError}</Alert> : null}
             {uploadError ? <Alert tone="error">{uploadError}</Alert> : null}
             <form
                 onSubmit={submit}
-                className="mt-4 rounded-card border border-line bg-white p-6"
+                className="rounded-card border-line mt-4 border bg-white p-6"
                 noValidate
             >
                 <Field label="Title">
@@ -263,7 +301,10 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                     />
                 </Field>
                 <Field label="Category">
-                    <Select value={form.data.category} onChange={(event) => onCategory(event.target.value)}>
+                    <Select
+                        value={form.data.category}
+                        onChange={(event) => onCategory(event.target.value)}
+                    >
                         {categories.map((category) => (
                             <option key={category.slug} value={category.slug}>
                                 {category.name}
@@ -271,20 +312,25 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                         ))}
                     </Select>
                 </Field>
-                <p className="-mt-1.5 mb-3 text-[13px] text-muted">
-                    Changing category loads typical includes and excludes. Add or remove with ×.
+                <p className="text-muted -mt-1.5 mb-3 text-[13px]">
+                    Changing category loads typical includes and excludes. Add
+                    or remove with ×.
                 </p>
                 <Field label="Short highlight">
                     <Input
                         value={form.data.highlight ?? ''}
-                        onChange={(event) => set('highlight', event.target.value)}
+                        onChange={(event) =>
+                            set('highlight', event.target.value)
+                        }
                     />
                 </Field>
                 <Field label="Description">
                     <Textarea
                         required
                         value={form.data.description}
-                        onChange={(event) => set('description', event.target.value)}
+                        onChange={(event) =>
+                            set('description', event.target.value)
+                        }
                     />
                 </Field>
 
@@ -312,7 +358,9 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                             type="number"
                             min={1}
                             value={form.data.duration_days}
-                            onChange={(event) => set('duration_days', Number(event.target.value))}
+                            onChange={(event) =>
+                                set('duration_days', Number(event.target.value))
+                            }
                         />
                     </Field>
                     <Field label="Nights">
@@ -320,7 +368,12 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                             type="number"
                             min={0}
                             value={form.data.duration_nights}
-                            onChange={(event) => set('duration_nights', Number(event.target.value))}
+                            onChange={(event) =>
+                                set(
+                                    'duration_nights',
+                                    Number(event.target.value),
+                                )
+                            }
                         />
                     </Field>
                     <Field label="Price (LKR)">
@@ -330,23 +383,38 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                             min={1}
                             value={form.data.price_lkr}
                             onChange={(event) =>
-                                set('price_lkr', event.target.value === '' ? '' : Number(event.target.value))
+                                set(
+                                    'price_lkr',
+                                    event.target.value === ''
+                                        ? ''
+                                        : Number(event.target.value),
+                                )
                             }
                         />
                     </Field>
                 </div>
                 <Field label="Price type">
-                    <Select value={form.data.price_type} onChange={(event) => set('price_type', event.target.value)}>
+                    <Select
+                        value={form.data.price_type}
+                        onChange={(event) =>
+                            set('price_type', event.target.value)
+                        }
+                    >
                         <option value="per_package">Per package</option>
                         <option value="per_person">Per person</option>
-                        <option value="per_night">Per night (villa/hotel)</option>
+                        <option value="per_night">
+                            Per night (villa/hotel)
+                        </option>
                     </Select>
                 </Field>
 
-                <div className="my-4.5 rounded-[14px] border border-brand-100 bg-brand-50 p-3.5">
-                    <h3 className="mb-1 font-sans text-base font-bold">Discount (optional)</h3>
-                    <p className="mb-3 text-[13px] text-muted">
-                        Offer a percentage or fixed LKR discount on this package. Dates are optional.
+                <div className="border-brand-100 bg-brand-50 my-4.5 rounded-[14px] border p-3.5">
+                    <h3 className="mb-1 font-sans text-base font-bold">
+                        Discount (optional)
+                    </h3>
+                    <p className="text-muted mb-3 text-[13px]">
+                        Offer a percentage or fixed LKR discount on this
+                        package. Dates are optional.
                     </p>
                     <Field label="Discount type">
                         <Select
@@ -356,36 +424,60 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                                 form.setData((data) => ({
                                     ...data,
                                     discount_type: type,
-                                    discount_value: type === 'none' ? 0 : data.discount_value,
+                                    discount_value:
+                                        type === 'none'
+                                            ? 0
+                                            : data.discount_value,
                                     discount_enabled: type !== 'none',
                                 }));
                             }}
                         >
                             <option value="none">No discount</option>
                             <option value="percentage">Percentage off</option>
-                            <option value="fixed">Fixed amount off (LKR)</option>
+                            <option value="fixed">
+                                Fixed amount off (LKR)
+                            </option>
                         </Select>
                     </Field>
                     {form.data.discount_type !== 'none' ? (
                         <>
                             <div className="grid gap-3 sm:grid-cols-2">
                                 <Field
-                                    label={form.data.discount_type === 'percentage' ? 'Discount %' : 'Discount amount (LKR)'}
+                                    label={
+                                        form.data.discount_type === 'percentage'
+                                            ? 'Discount %'
+                                            : 'Discount amount (LKR)'
+                                    }
                                 >
                                     <Input
                                         type="number"
                                         min={0}
-                                        max={form.data.discount_type === 'percentage' ? 100 : undefined}
+                                        max={
+                                            form.data.discount_type ===
+                                            'percentage'
+                                                ? 100
+                                                : undefined
+                                        }
                                         value={form.data.discount_value}
-                                        onChange={(event) => set('discount_value', Number(event.target.value))}
+                                        onChange={(event) =>
+                                            set(
+                                                'discount_value',
+                                                Number(event.target.value),
+                                            )
+                                        }
                                     />
                                 </Field>
-                                <label className="flex cursor-pointer items-center gap-2 self-center text-[13px] font-bold text-brand-900">
+                                <label className="text-brand-900 flex cursor-pointer items-center gap-2 self-center text-[13px] font-bold">
                                     <input
                                         type="checkbox"
-                                        className="h-4 w-4 accent-brand-800"
+                                        className="accent-brand-800 h-4 w-4"
                                         checked={form.data.discount_enabled}
-                                        onChange={(event) => set('discount_enabled', event.target.checked)}
+                                        onChange={(event) =>
+                                            set(
+                                                'discount_enabled',
+                                                event.target.checked,
+                                            )
+                                        }
                                     />
                                     Discount is active
                                 </label>
@@ -394,13 +486,17 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                                 <DateInput
                                     label="Discount from (optional)"
                                     value={form.data.discount_start}
-                                    onChange={(value) => set('discount_start', value)}
+                                    onChange={(value) =>
+                                        set('discount_start', value)
+                                    }
                                 />
                                 <DateInput
                                     label="Discount until (optional)"
                                     value={form.data.discount_end}
                                     min={form.data.discount_start || undefined}
-                                    onChange={(value) => set('discount_end', value)}
+                                    onChange={(value) =>
+                                        set('discount_end', value)
+                                    }
                                 />
                             </div>
                         </>
@@ -413,7 +509,9 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                             type="number"
                             min={1}
                             value={form.data.min_guests}
-                            onChange={(event) => set('min_guests', Number(event.target.value))}
+                            onChange={(event) =>
+                                set('min_guests', Number(event.target.value))
+                            }
                         />
                     </Field>
                     <Field label="Max guests">
@@ -421,18 +519,26 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                             type="number"
                             min={1}
                             value={form.data.max_guests}
-                            onChange={(event) => set('max_guests', Number(event.target.value))}
+                            onChange={(event) =>
+                                set('max_guests', Number(event.target.value))
+                            }
                         />
                     </Field>
                 </div>
 
-                <h3 className="mt-2 mb-2 font-sans text-lg font-bold">When it runs</h3>
+                <h3 className="mt-2 mb-2 font-sans text-lg font-bold">
+                    When it runs
+                </h3>
                 <Field label="Availability">
                     <Select
                         value={form.data.schedule_type}
-                        onChange={(event) => set('schedule_type', event.target.value)}
+                        onChange={(event) =>
+                            set('schedule_type', event.target.value)
+                        }
                     >
-                        <option value="always">No end date — keep running</option>
+                        <option value="always">
+                            No end date — keep running
+                        </option>
                         <option value="range">Only in a date window</option>
                     </Select>
                 </Field>
@@ -452,22 +558,30 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                     </div>
                 ) : null}
                 <div className="mb-3 flex flex-col gap-1.5">
-                    <span className="text-xs font-bold tracking-wide text-muted uppercase">Days of week</span>
+                    <span className="text-muted text-xs font-bold tracking-wide uppercase">
+                        Days of week
+                    </span>
                     <div className="flex flex-wrap gap-2">
                         {WEEKDAYS.map((day) => (
                             <button
                                 key={day.n}
                                 type="button"
                                 className={cn(
-                                    'inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white px-2.5 py-1.5 text-[13px] font-semibold',
-                                    form.data.weekdays.includes(day.n) && 'border-brand-800 bg-brand-800 text-white',
+                                    'border-line inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-white px-2.5 py-1.5 text-[13px] font-semibold',
+                                    form.data.weekdays.includes(day.n) &&
+                                        'border-brand-800 bg-brand-800 text-white',
                                 )}
                                 onClick={() =>
                                     set(
                                         'weekdays',
                                         form.data.weekdays.includes(day.n)
-                                            ? form.data.weekdays.filter((value) => value !== day.n)
-                                            : [...form.data.weekdays, day.n].sort(),
+                                            ? form.data.weekdays.filter(
+                                                  (value) => value !== day.n,
+                                              )
+                                            : [
+                                                  ...form.data.weekdays,
+                                                  day.n,
+                                              ].sort(),
                                     )
                                 }
                             >
@@ -475,7 +589,7 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                             </button>
                         ))}
                     </div>
-                    <em className="text-xs text-muted not-italic">
+                    <em className="text-muted text-xs not-italic">
                         Example: only Sat and Sun between 12 Sep and 30 Sep.
                     </em>
                 </div>
@@ -494,21 +608,32 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                 />
 
                 <div className="mb-3 flex flex-col gap-1.5">
-                    <span className="text-xs font-bold tracking-wide text-muted uppercase">Plan by day</span>
-                    <em className="text-xs text-muted not-italic">
-                        Travellers see this as a day-by-day itinerary. Leave it empty for simple stays.
+                    <span className="text-muted text-xs font-bold tracking-wide uppercase">
+                        Plan by day
+                    </span>
+                    <em className="text-muted text-xs not-italic">
+                        Travellers see this as a day-by-day itinerary. Leave it
+                        empty for simple stays.
                     </em>
                     {(form.data.itinerary ?? []).map((stop, position) => (
-                        <div key={position} className="rounded-xl border border-line bg-white p-3">
+                        <div
+                            key={position}
+                            className="border-line rounded-xl border bg-white p-3"
+                        >
                             <div className="mb-2 flex items-center justify-between gap-2">
-                                <strong className="text-[13px]">Day {position + 1}</strong>
+                                <strong className="text-[13px]">
+                                    Day {position + 1}
+                                </strong>
                                 <button
                                     type="button"
-                                    className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold text-danger"
+                                    className="text-danger cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold"
                                     onClick={() =>
                                         set(
                                             'itinerary',
-                                            form.data.itinerary.filter((_, index) => index !== position),
+                                            form.data.itinerary.filter(
+                                                (_, index) =>
+                                                    index !== position,
+                                            ),
                                         )
                                     }
                                 >
@@ -522,7 +647,12 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                                     set(
                                         'itinerary',
                                         form.data.itinerary.map((day, index) =>
-                                            index === position ? { ...day, title: event.target.value } : day,
+                                            index === position
+                                                ? {
+                                                      ...day,
+                                                      title: event.target.value,
+                                                  }
+                                                : day,
                                         ),
                                     )
                                 }
@@ -534,8 +664,16 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                                     onChange={(event) =>
                                         set(
                                             'itinerary',
-                                            form.data.itinerary.map((day, index) =>
-                                                index === position ? { ...day, description: event.target.value } : day,
+                                            form.data.itinerary.map(
+                                                (day, index) =>
+                                                    index === position
+                                                        ? {
+                                                              ...day,
+                                                              description:
+                                                                  event.target
+                                                                      .value,
+                                                          }
+                                                        : day,
                                             ),
                                         )
                                     }
@@ -545,11 +683,15 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                     ))}
                     <button
                         type="button"
-                        className="inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-bold text-brand-900 transition hover:border-brand-700"
+                        className="border-line text-brand-900 hover:border-brand-700 inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-full border bg-white px-3.5 py-2 text-[13px] font-bold transition"
                         onClick={() =>
                             set('itinerary', [
                                 ...(form.data.itinerary ?? []),
-                                { day: (form.data.itinerary ?? []).length + 1, title: '', description: '' },
+                                {
+                                    day: (form.data.itinerary ?? []).length + 1,
+                                    title: '',
+                                    description: '',
+                                },
                             ])
                         }
                     >
@@ -559,41 +701,50 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
 
                 <div className="mb-3 flex flex-col gap-1.5">
                     <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-bold tracking-wide text-muted uppercase">Photos</span>
+                        <span className="text-muted text-xs font-bold tracking-wide uppercase">
+                            Photos
+                        </span>
                         <span
                             className={cn(
                                 'text-xs font-bold',
-                                images.length >= 5 ? 'text-brand-800' : 'text-warn',
+                                images.length >= 5
+                                    ? 'text-brand-800'
+                                    : 'text-warn',
                             )}
                         >
                             {images.length} of {MAX_PHOTOS} photos
                         </span>
                     </div>
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-cream-dark">
+                    <div className="bg-cream-dark h-1.5 w-full overflow-hidden rounded-full">
                         <div
                             className={cn(
                                 'h-full rounded-full transition-all',
                                 images.length >= 5 ? 'bg-brand-700' : 'bg-warn',
                             )}
-                            style={{ width: `${Math.min(100, (images.length / MAX_PHOTOS) * 100)}%` }}
+                            style={{
+                                width: `${Math.min(100, (images.length / MAX_PHOTOS) * 100)}%`,
+                            }}
                         />
                     </div>
-                    <em className="text-xs text-muted not-italic">
-                        Up to {MAX_PHOTOS} photos, {MAX_PHOTO_MB} MB each. Each photo is watermarked before
-                        it is stored, so use photos you are happy to brand.
+                    <em className="text-muted text-xs not-italic">
+                        Up to {MAX_PHOTOS} photos, {MAX_PHOTO_MB} MB each. Each
+                        photo is watermarked before it is stored, so use photos
+                        you are happy to brand.
                     </em>
                     {images.length < 4 ? (
-                        <p className="rounded-lg bg-orange-50 px-2.5 py-2 text-[12px] font-semibold text-warn">
-                            Listings with 5 or more photos get noticeably more bookings. Aim for a mix of
-                            the place, the view, food and what guests actually do — at least 4 to start.
+                        <p className="text-warn rounded-lg bg-orange-50 px-2.5 py-2 text-[12px] font-semibold">
+                            Listings with 5 or more photos get noticeably more
+                            bookings. Aim for a mix of the place, the view, food
+                            and what guests actually do — at least 4 to start.
                         </p>
                     ) : images.length < 5 ? (
-                        <p className="text-[12px] font-semibold text-brand-800">
+                        <p className="text-brand-800 text-[12px] font-semibold">
                             Nice — one more photo and you are in the sweet spot.
                         </p>
                     ) : (
-                        <p className="text-[12px] font-semibold text-brand-800">
-                            Great coverage. This listing will stand out in search.
+                        <p className="text-brand-800 text-[12px] font-semibold">
+                            Great coverage. This listing will stand out in
+                            search.
                         </p>
                     )}
                     <input
@@ -603,15 +754,33 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                         onChange={onFiles}
                         className="mt-1 text-sm"
                     />
-                    {uploading ? <em className="text-xs text-muted not-italic">Uploading…</em> : null}
+                    {uploading ? (
+                        <em className="text-muted text-xs not-italic">
+                            Uploading…
+                        </em>
+                    ) : null}
                     <div className="mt-2.5 flex flex-wrap gap-2">
                         {images.map((src) => (
-                            <div key={src} className="relative h-18 w-22 overflow-hidden rounded-[10px]">
-                                <img src={src} alt="" className="h-full w-full object-cover" />
+                            <div
+                                key={src}
+                                className="relative h-18 w-22 overflow-hidden rounded-[10px]"
+                            >
+                                <img
+                                    src={src}
+                                    alt=""
+                                    className="h-full w-full object-cover"
+                                />
                                 <button
                                     type="button"
                                     className="absolute top-1 right-1 grid h-5.5 w-5.5 cursor-pointer place-items-center rounded-full border-0 bg-white font-extrabold"
-                                    onClick={() => set('images', images.filter((value) => value !== src))}
+                                    onClick={() =>
+                                        set(
+                                            'images',
+                                            images.filter(
+                                                (value) => value !== src,
+                                            ),
+                                        )
+                                    }
                                 >
                                     ×
                                 </button>
@@ -624,16 +793,21 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                     <Input
                         value={form.data.meeting_point ?? ''}
                         placeholder="Only if guests meet you somewhere other than the stay"
-                        onChange={(event) => set('meeting_point', event.target.value)}
+                        onChange={(event) =>
+                            set('meeting_point', event.target.value)
+                        }
                     />
                 </Field>
-                <p className="-mt-2 mb-4 text-[13px] text-muted">
-                    Skip this for hotels and villas. Use it for hikes, rafting and day outs.
+                <p className="text-muted -mt-2 mb-4 text-[13px]">
+                    Skip this for hotels and villas. Use it for hikes, rafting
+                    and day outs.
                 </p>
                 <Field label="Cancellation policy">
                     <Textarea
                         value={form.data.cancellation_policy ?? ''}
-                        onChange={(event) => set('cancellation_policy', event.target.value)}
+                        onChange={(event) =>
+                            set('cancellation_policy', event.target.value)
+                        }
                     />
                 </Field>
 
@@ -642,20 +816,32 @@ const PackageForm: InertiaComponent<FormProps> = ({ package: existing, categorie
                         type="checkbox"
                         className="h-4 w-4"
                         checked={form.data.active}
-                        onChange={(event) => set('active', event.target.checked)}
+                        onChange={(event) =>
+                            set('active', event.target.checked)
+                        }
                     />
                     List this package in search
                 </label>
 
                 {editing && existing?.id ? (
-                    <div className="mb-3 flex items-center gap-3 rounded-xl bg-cream px-3.5 py-3">
-                        <span className="text-[13px] font-bold text-brand-900">Share this package</span>
-                        <SharePackage id={existing.id} slug={existing.slug ?? null} title={form.data.title} />
+                    <div className="bg-cream mb-3 flex items-center gap-3 rounded-xl px-3.5 py-3">
+                        <span className="text-brand-900 text-[13px] font-bold">
+                            Share this package
+                        </span>
+                        <SharePackage
+                            id={existing.id}
+                            slug={existing.slug ?? null}
+                            title={form.data.title}
+                        />
                     </div>
                 ) : null}
 
                 <Button type="submit" disabled={form.processing}>
-                    {form.processing ? 'Saving…' : editing ? 'Save' : 'Publish package'}
+                    {form.processing
+                        ? 'Saving…'
+                        : editing
+                          ? 'Save'
+                          : 'Publish package'}
                 </Button>
             </form>
         </div>

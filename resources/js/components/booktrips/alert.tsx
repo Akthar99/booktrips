@@ -20,7 +20,13 @@ export default function Alert({
     className?: string;
 }) {
     return (
-        <div className={cn('my-2 rounded-xl px-3 py-2.5 text-[13px] leading-relaxed', TONES[tone], className)}>
+        <div
+            className={cn(
+                'my-2 rounded-xl px-3 py-2.5 text-[13px] leading-relaxed',
+                TONES[tone],
+                className,
+            )}
+        >
             {children}
         </div>
     );

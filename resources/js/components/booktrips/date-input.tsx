@@ -12,10 +12,7 @@ function parseIso(value?: string | null): Date | null {
         return null;
     }
 
-    const [y, m, d] = String(value)
-        .slice(0, 10)
-        .split('-')
-        .map(Number);
+    const [y, m, d] = String(value).slice(0, 10).split('-').map(Number);
 
     if (!y || !m || !d) {
         return null;
@@ -43,7 +40,11 @@ function formatDisplay(iso?: string | null): string {
         return '';
     }
 
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
 }
 
 function daysInGrid(year: number, month: number): Array<Date | null> {
@@ -135,7 +136,10 @@ export default function DateInput({
         const node = wrap.current;
 
         if (!open && node) {
-            setAlignRight(node.getBoundingClientRect().left + POPUP_WIDTH > window.innerWidth - 8);
+            setAlignRight(
+                node.getBoundingClientRect().left + POPUP_WIDTH >
+                    window.innerWidth - 8,
+            );
         }
 
         setOpen((value) => !value);
@@ -147,14 +151,22 @@ export default function DateInput({
     }
 
     return (
-        <div className={cn('relative flex flex-col gap-1.5', className)} ref={wrap}>
-            {label ? <span className="text-xs font-bold tracking-wide text-muted uppercase">{label}</span> : null}
+        <div
+            className={cn('relative flex flex-col gap-1.5', className)}
+            ref={wrap}
+        >
+            {label ? (
+                <span className="text-muted text-xs font-bold tracking-wide uppercase">
+                    {label}
+                </span>
+            ) : null}
             <button
                 type="button"
                 className={cn(
-                    'flex min-h-[43px] w-full cursor-pointer items-center rounded-xl border border-line bg-white px-3 py-2.5 text-left text-sm font-semibold',
-                    bare && 'min-h-0 rounded-none border-0 bg-transparent p-0 text-[15px]',
-                    !value && 'font-medium text-muted',
+                    'border-line flex min-h-[43px] w-full cursor-pointer items-center rounded-xl border bg-white px-3 py-2.5 text-left text-sm font-semibold',
+                    bare &&
+                        'min-h-0 rounded-none border-0 bg-transparent p-0 text-[15px]',
+                    !value && 'text-muted font-medium',
                 )}
                 onClick={toggle}
                 aria-haspopup="dialog"
@@ -176,7 +188,7 @@ export default function DateInput({
             {open ? (
                 <div
                     className={cn(
-                        'absolute top-[calc(100%+6px)] z-50 max-w-[calc(100vw-2rem)] rounded-[14px] border border-line bg-white p-3 shadow-card',
+                        'border-line shadow-card absolute top-[calc(100%+6px)] z-50 max-w-[calc(100vw-2rem)] rounded-[14px] border bg-white p-3',
                         alignRight ? 'right-0' : 'left-0',
                     )}
                     style={{ width: POPUP_WIDTH }}
@@ -186,7 +198,7 @@ export default function DateInput({
                     <div className="mb-2.5 flex items-center justify-between text-sm">
                         <button
                             type="button"
-                            className="h-8 w-8 cursor-pointer rounded-lg border-0 bg-brand-50 text-lg text-brand-900"
+                            className="bg-brand-50 text-brand-900 h-8 w-8 cursor-pointer rounded-lg border-0 text-lg"
                             onClick={() => shift(-1)}
                             aria-label="Previous month"
                         >
@@ -197,7 +209,7 @@ export default function DateInput({
                         </strong>
                         <button
                             type="button"
-                            className="h-8 w-8 cursor-pointer rounded-lg border-0 bg-brand-50 text-lg text-brand-900"
+                            className="bg-brand-50 text-brand-900 h-8 w-8 cursor-pointer rounded-lg border-0 text-lg"
                             onClick={() => shift(1)}
                             aria-label="Next month"
                         >
@@ -206,7 +218,10 @@ export default function DateInput({
                     </div>
                     <div className="grid grid-cols-7 gap-0.5 text-center">
                         {WEEK.map((w) => (
-                            <em key={w} className="py-1.5 text-[11px] font-bold text-muted not-italic">
+                            <em
+                                key={w}
+                                className="text-muted py-1.5 text-[11px] font-bold not-italic"
+                            >
                                 {w}
                             </em>
                         ))}
@@ -216,9 +231,13 @@ export default function DateInput({
                             }
 
                             const iso = toIso(date);
-                            const disabled = Boolean(minDate && startOfDay(date) < startOfDay(minDate));
+                            const disabled = Boolean(
+                                minDate &&
+                                startOfDay(date) < startOfDay(minDate),
+                            );
                             const isSelected = value === iso;
-                            const isToday = startOfDay(date).getTime() === today.getTime();
+                            const isToday =
+                                startOfDay(date).getTime() === today.getTime();
 
                             return (
                                 <button
@@ -226,9 +245,12 @@ export default function DateInput({
                                     type="button"
                                     disabled={disabled}
                                     className={cn(
-                                        'h-9 cursor-pointer rounded-lg border-0 text-[13px] font-semibold text-ink hover:bg-brand-50 disabled:cursor-default disabled:opacity-30',
-                                        isSelected && 'bg-brand-800 text-white hover:bg-brand-800',
-                                        isToday && !isSelected && 'shadow-[inset_0_0_0_1px_var(--color-brand-700)]',
+                                        'text-ink hover:bg-brand-50 h-9 cursor-pointer rounded-lg border-0 text-[13px] font-semibold disabled:cursor-default disabled:opacity-30',
+                                        isSelected &&
+                                            'bg-brand-800 hover:bg-brand-800 text-white',
+                                        isToday &&
+                                            !isSelected &&
+                                            'shadow-[inset_0_0_0_1px_var(--color-brand-700)]',
                                     )}
                                     onClick={() => pick(date)}
                                 >
@@ -240,7 +262,7 @@ export default function DateInput({
                     <div className="mt-2 flex justify-between">
                         <button
                             type="button"
-                            className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold text-brand-800"
+                            className="text-brand-800 cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold"
                             onClick={() => {
                                 onChange('');
                                 setOpen(false);
@@ -250,7 +272,7 @@ export default function DateInput({
                         </button>
                         <button
                             type="button"
-                            className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold text-brand-800"
+                            className="text-brand-800 cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold"
                             onClick={() => pick(today)}
                         >
                             Today

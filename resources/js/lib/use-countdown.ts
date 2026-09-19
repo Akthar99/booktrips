@@ -16,7 +16,10 @@ export function useCountdown(defaultSeconds = 60) {
         }
 
         function tick() {
-            const left = Math.max(0, Math.ceil(((until as number) - Date.now()) / 1000));
+            const left = Math.max(
+                0,
+                Math.ceil(((until as number) - Date.now()) / 1000),
+            );
             setSeconds(left);
 
             if (left === 0) {

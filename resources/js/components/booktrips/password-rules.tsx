@@ -26,9 +26,16 @@ export default function PasswordRules({ password }: { password: string }) {
     const checks = passwordChecks(password);
 
     return (
-        <ul className="mb-3 grid list-none gap-1 p-0 text-xs text-muted">
+        <ul className="text-muted mb-3 grid list-none gap-1 p-0 text-xs">
             {RULES.map((rule) => (
-                <li key={rule.key} className={checks[rule.key] ? 'font-bold text-brand-800' : undefined}>
+                <li
+                    key={rule.key}
+                    className={
+                        checks[rule.key]
+                            ? 'text-brand-800 font-bold'
+                            : undefined
+                    }
+                >
                     {rule.label}
                 </li>
             ))}

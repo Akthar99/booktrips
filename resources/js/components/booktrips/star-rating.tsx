@@ -14,7 +14,10 @@ export default function StarRating({
     const score = Number(value || 0);
 
     return (
-        <div className="inline-flex items-center gap-0.5 text-gold" aria-label={`${score} out of 5 stars`}>
+        <div
+            className="text-gold inline-flex items-center gap-0.5"
+            aria-label={`${score} out of 5 stars`}
+        >
             {[1, 2, 3, 4, 5].map((star) => (
                 <button
                     key={star}
@@ -22,16 +25,25 @@ export default function StarRating({
                     className={
                         'inline-flex items-center justify-center border-0 bg-transparent p-0 ' +
                         (star <= score ? 'text-[#d59b22]' : 'text-[#d6d2c8]') +
-                        (readOnly ? ' cursor-default' : ' cursor-pointer hover:text-[#b97905]')
+                        (readOnly
+                            ? ' cursor-default'
+                            : ' cursor-pointer hover:text-[#b97905]')
                     }
                     onClick={() => !readOnly && onChange?.(star)}
                     disabled={readOnly}
                     aria-label={`${star} star${star === 1 ? '' : 's'}`}
                 >
-                    <Star size={size} fill={star <= score ? 'currentColor' : 'none'} />
+                    <Star
+                        size={size}
+                        fill={star <= score ? 'currentColor' : 'none'}
+                    />
                 </button>
             ))}
-            {!readOnly ? <span className="ml-1.5 text-[13px] font-bold text-muted">{score}/5</span> : null}
+            {!readOnly ? (
+                <span className="text-muted ml-1.5 text-[13px] font-bold">
+                    {score}/5
+                </span>
+            ) : null}
         </div>
     );
 }

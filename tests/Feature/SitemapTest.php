@@ -25,6 +25,8 @@ it('writes a sitemap with every active package and no inactive ones', function (
     expect($xml)
         ->toContain('/packages/hiking-in-ella')
         ->toContain('/search')
+        ->toContain('/privacy')
+        ->toContain('/terms')
         ->not->toContain('/packages/hidden-trip')
         ->and(simplexml_load_string($xml))->not->toBeFalse();
 });

@@ -52,6 +52,7 @@ function applicationPayload(array $overrides = []): array
         'city' => 'Ella',
         'district' => 'Badulla',
         'website' => 'https://ellaridge.example',
+        'terms' => true,
     ], $overrides);
 }
 
@@ -89,6 +90,15 @@ it('lets a guest apply and notifies the admins straight away', function () {
 it('refuses an application with an unverified phone number', function () {
     $this->post('/partners/apply', applicationPayload())
         ->assertSessionHasErrors('phone');
+
+    expect(User::query()->where('email', 'kasun@example.com')->exists())->toBeFalse();
+});
+
+it('refuses an application that does not accept the terms', function () {
+    verifyPhone();
+
+    $this->post('/partners/apply', applicationPayload(['terms' => false]))
+        ->assertSessionHasErrors('terms');
 
     expect(User::query()->where('email', 'kasun@example.com')->exists())->toBeFalse();
 });
@@ -162,6 +172,7 @@ it('upgrades a signed-in traveller on the same account', function () {
             'city' => 'Weligama',
             'district' => 'Matara',
             'whatsapp' => '94719999999',
+            'terms' => true,
         ])
         ->assertRedirect(route('partner.pending'));
 
@@ -215,6 +226,7 @@ it('will not create a second business for the same owner', function () {
             'type' => 'villa',
             'city' => 'Galle',
             'facebook' => 'https://facebook.com/duplicate',
+            'terms' => true,
         ])
         ->assertRedirect(route('partner.pending'));
 

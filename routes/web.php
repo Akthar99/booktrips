@@ -56,6 +56,8 @@ Route::get('/packages/{package}/quote', [PackageController::class, 'quote'])
     ->name('packages.quote');
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/partners', [PageController::class, 'partners'])->name('partners');
+Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');
+Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/geo/search', [GeoController::class, 'search'])
     ->middleware('throttle:30,1')
     ->name('geo.search');

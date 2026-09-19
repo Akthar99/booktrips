@@ -33,6 +33,10 @@
         <!-- Tests must never reach a real bucket, whatever .env holds. -->
         <env name="BOOKTRIPS_IMAGES_DISK" value="public"/>
         <env name="BOOKTRIPS_RECEIPTS_DISK" value="local"/>
+        <!-- Keep the blank-AWS_URL regression honest (see MediaUrlTest). -->
+        <env name="AWS_URL" value=""/>
+        <!-- No real SMS in tests: un-faked sends fall back to the log driver. -->
+        <env name="TEXTLK_API_KEY" value=""/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

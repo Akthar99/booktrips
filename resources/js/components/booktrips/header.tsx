@@ -36,20 +36,23 @@ export default function Header() {
         router.post('/logout');
     }
 
-    const navLink = 'font-semibold text-muted transition hover:text-brand-900 text-sm';
+    const navLink =
+        'font-semibold text-muted transition hover:text-brand-900 text-sm';
 
     return (
         <header
             className={
-                'sticky top-0 z-40 flex min-h-18 flex-col justify-center bg-cream/94 backdrop-blur-lg ' +
-                (onHome ? 'border-b border-transparent' : 'border-b border-line')
+                'bg-cream/94 sticky top-0 z-40 flex min-h-18 flex-col justify-center backdrop-blur-lg ' +
+                (onHome
+                    ? 'border-b border-transparent'
+                    : 'border-line border-b')
             }
         >
             <div className="mx-auto flex min-h-18 w-[min(1180px,calc(100%-2rem))] items-center gap-7">
                 <Link href="/">
                     <Logo />
                 </Link>
-                <nav className="hidden items-center gap-4.5 text-sm font-semibold text-muted lg:flex">
+                <nav className="text-muted hidden items-center gap-4.5 text-sm font-semibold lg:flex">
                     {!isPartner ? (
                         <Link href="/search" className={navLink}>
                             Explore
@@ -64,33 +67,36 @@ export default function Header() {
                         </Link>
                     ) : null}
                 </nav>
-                <div className="relative ml-auto flex items-center gap-2.5" ref={wrap}>
+                <div
+                    className="relative ml-auto flex items-center gap-2.5"
+                    ref={wrap}
+                >
                     <NotifyBell />
                     {isPartner ? (
                         <Link
                             href="/partners/dashboard"
-                            className="hidden rounded-full bg-brand-800 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900 sm:inline-flex"
+                            className="bg-brand-800 hover:bg-brand-900 hidden rounded-full px-4 py-2.5 text-sm font-bold text-white transition sm:inline-flex"
                         >
                             Dashboard
                         </Link>
                     ) : user ? (
                         <Link
                             href="/account/bookings"
-                            className="hidden rounded-full border border-line bg-white px-4 py-2.5 text-sm font-bold text-brand-900 transition hover:border-brand-700 sm:inline-flex"
+                            className="border-line text-brand-900 hover:border-brand-700 hidden rounded-full border bg-white px-4 py-2.5 text-sm font-bold transition sm:inline-flex"
                         >
                             My trips
                         </Link>
                     ) : (
                         <Link
                             href="/login"
-                            className="hidden rounded-full px-4 py-2.5 text-sm font-bold text-brand-900 transition hover:bg-brand-50 sm:inline-flex"
+                            className="text-brand-900 hover:bg-brand-50 hidden rounded-full px-4 py-2.5 text-sm font-bold transition sm:inline-flex"
                         >
                             Log in
                         </Link>
                     )}
                     <button
                         type="button"
-                        className="grid cursor-pointer place-items-center border-0 bg-transparent p-2 text-brand-900"
+                        className="text-brand-900 grid cursor-pointer place-items-center border-0 bg-transparent p-2"
                         onClick={() => setOpen((value) => !value)}
                         aria-label={open ? 'Close menu' : 'Open menu'}
                         aria-expanded={open}
@@ -98,12 +104,15 @@ export default function Header() {
                         {open ? <X size={22} /> : <Menu size={22} />}
                     </button>
                     {open ? (
-                        <div className="absolute top-[calc(100%+8px)] right-0 z-90 w-55 rounded-[14px] border border-line bg-white p-2 shadow-card">
+                        <div className="border-line shadow-card absolute top-[calc(100%+8px)] right-0 z-90 w-55 rounded-[14px] border bg-white p-2">
                             {[
                                 isPartner
                                     ? [
                                           ['Dashboard', '/partners/dashboard'],
-                                          ['Reservations', '/partners/bookings'],
+                                          [
+                                              'Reservations',
+                                              '/partners/bookings',
+                                          ],
                                           ['Finance', '/partners/payments'],
                                           ['Map', '/map'],
                                           ['My account', '/account'],
@@ -116,12 +125,26 @@ export default function Header() {
                                           ...(user
                                               ? [
                                                     ['My account', '/account'],
-                                                    ['My bookings', '/account/bookings'],
-                                                    ...(user.role === 'business' && !approved
-                                                        ? [['Application', '/partners/pending']]
+                                                    [
+                                                        'My bookings',
+                                                        '/account/bookings',
+                                                    ],
+                                                    ...(user.role ===
+                                                        'business' && !approved
+                                                        ? [
+                                                              [
+                                                                  'Application',
+                                                                  '/partners/pending',
+                                                              ],
+                                                          ]
                                                         : []),
-                                                    ...(isAdmin ? [['Admin', '/admin']] : []),
-                                                    ['Help & support', '/support'],
+                                                    ...(isAdmin
+                                                        ? [['Admin', '/admin']]
+                                                        : []),
+                                                    [
+                                                        'Help & support',
+                                                        '/support',
+                                                    ],
                                                 ]
                                               : [
                                                     ['Log in', '/login'],
@@ -134,7 +157,7 @@ export default function Header() {
                                     <Link
                                         key={href}
                                         href={href}
-                                        className="block rounded-[10px] px-3 py-2.5 text-sm font-bold text-brand-900 hover:bg-brand-50"
+                                        className="text-brand-900 hover:bg-brand-50 block rounded-[10px] px-3 py-2.5 text-sm font-bold"
                                     >
                                         {label}
                                     </Link>
@@ -142,7 +165,7 @@ export default function Header() {
                             {user ? (
                                 <button
                                     type="button"
-                                    className="block w-full cursor-pointer rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left text-sm font-bold text-brand-900 hover:bg-brand-50"
+                                    className="text-brand-900 hover:bg-brand-50 block w-full cursor-pointer rounded-[10px] border-0 bg-transparent px-3 py-2.5 text-left text-sm font-bold"
                                     onClick={logout}
                                 >
                                     Log out

@@ -33,11 +33,13 @@ const Bookings: InertiaComponent<BookingsProps> = ({ bookings }) => {
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">My trips</h1>
-            <p className="mb-5 text-muted">Show the booking code to your host. Pay there.</p>
+            <p className="text-muted mb-5">
+                Show the booking code to your host. Pay there.
+            </p>
             {bookings.data.length === 0 ? (
                 <p>
                     No bookings yet.{' '}
-                    <Link className="font-bold text-brand-800" href="/search">
+                    <Link className="text-brand-800 font-bold" href="/search">
                         Find a package
                     </Link>
                 </p>
@@ -46,7 +48,7 @@ const Bookings: InertiaComponent<BookingsProps> = ({ bookings }) => {
                 {bookings.data.map((booking) => (
                     <div
                         key={booking.id}
-                        className="grid grid-cols-1 items-center gap-3.5 rounded-[14px] border border-line bg-white px-4 py-3.5 sm:grid-cols-[120px_1fr_auto]"
+                        className="border-line grid grid-cols-1 items-center gap-3.5 rounded-[14px] border bg-white px-4 py-3.5 sm:grid-cols-[120px_1fr_auto]"
                     >
                         {booking.package?.images?.[0] ? (
                             <img
@@ -61,20 +63,26 @@ const Bookings: InertiaComponent<BookingsProps> = ({ bookings }) => {
                             <Link href={`/account/bookings/${booking.id}`}>
                                 <strong>{booking.package?.title}</strong>
                             </Link>
-                            <div className="text-[13px] text-muted">
-                                {booking.check_in} → {booking.check_out} · {booking.guests} guests
+                            <div className="text-muted text-[13px]">
+                                {booking.check_in} → {booking.check_out} ·{' '}
+                                {booking.guests} guests
                             </div>
                             <div className="mt-1.5 flex items-center gap-2">
                                 <StatusBadge status={booking.status} />
-                                <span className="text-[13px] text-muted">{booking.booking_code}</span>
+                                <span className="text-muted text-[13px]">
+                                    {booking.booking_code}
+                                </span>
                             </div>
                         </div>
                         <div className="text-right">
-                            <div className="font-extrabold text-brand-900">{lkr(booking.total_lkr)}</div>
-                            {booking.status === 'confirmed' || booking.status === 'requested' ? (
+                            <div className="text-brand-900 font-extrabold">
+                                {lkr(booking.total_lkr)}
+                            </div>
+                            {booking.status === 'confirmed' ||
+                            booking.status === 'requested' ? (
                                 <button
                                     type="button"
-                                    className="mt-2 cursor-pointer rounded-full border border-red-200 bg-white px-3 py-1.5 text-[13px] font-bold text-danger transition hover:border-red-400"
+                                    className="text-danger mt-2 cursor-pointer rounded-full border border-red-200 bg-white px-3 py-1.5 text-[13px] font-bold transition hover:border-red-400"
                                     onClick={() => setCancelId(booking.id)}
                                 >
                                     Cancel
@@ -84,7 +92,11 @@ const Bookings: InertiaComponent<BookingsProps> = ({ bookings }) => {
                     </div>
                 ))}
             </div>
-            <Pagination page={bookings.current_page} lastPage={bookings.last_page} total={bookings.total} />
+            <Pagination
+                page={bookings.current_page}
+                lastPage={bookings.last_page}
+                total={bookings.total}
+            />
 
             <ConfirmDialog
                 open={cancelId !== null}

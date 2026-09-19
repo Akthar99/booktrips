@@ -3,7 +3,9 @@ import { Link, router } from '@inertiajs/react';
 import { updateStatus as partnerBookingStatus } from '@/actions/App/Http/Controllers/Partner/PartnerBookingController';
 import Alert from '@/components/booktrips/alert';
 import ConfirmDialog from '@/components/booktrips/confirm-dialog';
-import DisputePanel, { type DisputeData } from '@/components/booktrips/dispute-panel';
+import DisputePanel, {
+    type DisputeData,
+} from '@/components/booktrips/dispute-panel';
 import StatusBadge from '@/components/booktrips/status-badge';
 import { withAppLayout } from '@/layouts/app-layout';
 import { lkr } from '@/lib/booktrips';
@@ -20,19 +22,22 @@ type PartnerBookingProps = {
 const ACTION_COPY = {
     confirmed: {
         title: 'Confirm booking?',
-        message: 'The guest will be notified and their contact details will become visible.',
+        message:
+            'The guest will be notified and their contact details will become visible.',
         label: 'Confirm booking',
         danger: false,
     },
     rejected: {
         title: 'Reject booking?',
-        message: 'The guest will be notified that this request cannot be accepted.',
+        message:
+            'The guest will be notified that this request cannot be accepted.',
         label: 'Reject booking',
         danger: true,
     },
     completed: {
         title: 'Mark booking finished?',
-        message: 'This adds the booking to your completed income and monthly commission calculation.',
+        message:
+            'This adds the booking to your completed income and monthly commission calculation.',
         label: 'Mark finished',
         danger: false,
     },
@@ -40,10 +45,16 @@ const ACTION_COPY = {
 
 type PendingAction = keyof typeof ACTION_COPY;
 
-const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking, disputes, reportTypes, canReport }) => {
+const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({
+    booking,
+    disputes,
+    reportTypes,
+    canReport,
+}) => {
     const [pending, setPending] = useState<PendingAction | null>(null);
     const [busy, setBusy] = useState(false);
-    const open = booking.status === 'confirmed' || booking.status === 'completed';
+    const open =
+        booking.status === 'confirmed' || booking.status === 'completed';
     const copy = pending ? ACTION_COPY[pending] : null;
 
     function apply(status: PendingAction) {
@@ -63,14 +74,16 @@ const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking, disput
 
     return (
         <div className="mx-auto w-[min(640px,calc(100%-2rem))] py-7 pb-14">
-            <p className="text-[13px] text-muted">
-                <Link href="/partners/bookings">Reservations</Link> · {booking.booking_code}
+            <p className="text-muted text-[13px]">
+                <Link href="/partners/bookings">Reservations</Link> ·{' '}
+                {booking.booking_code}
             </p>
             <h1 className="mt-2 text-4xl">Guest arrival</h1>
             <p className="text-muted">{booking.package?.title}</p>
-            <div className="mt-4 rounded-[14px] border border-line bg-white px-4 py-3.5">
+            <div className="border-line mt-4 rounded-[14px] border bg-white px-4 py-3.5">
                 <p>
-                    <strong>When</strong> {booking.check_in} → {booking.check_out}
+                    <strong>When</strong> {booking.check_in} →{' '}
+                    {booking.check_out}
                 </p>
                 <p>
                     <strong>Guests</strong> {booking.guests}
@@ -88,7 +101,10 @@ const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking, disput
                         </p>
                     </>
                 ) : (
-                    <Alert tone="warn">Phone and email stay hidden until you confirm this request.</Alert>
+                    <Alert tone="warn">
+                        Phone and email stay hidden until you confirm this
+                        request.
+                    </Alert>
                 )}
                 {booking.notes ? (
                     <p>
@@ -96,21 +112,22 @@ const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking, disput
                     </p>
                 ) : null}
                 <p className="mt-2 flex items-center gap-2">
-                    <StatusBadge status={booking.status} /> · {lkr(booking.total_lkr)} at destination
+                    <StatusBadge status={booking.status} /> ·{' '}
+                    {lkr(booking.total_lkr)} at destination
                 </p>
             </div>
             {booking.status === 'requested' ? (
                 <div className="mt-4 flex gap-2.5">
                     <button
                         type="button"
-                        className="cursor-pointer rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
+                        className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition"
                         onClick={() => setPending('confirmed')}
                     >
                         Confirm
                     </button>
                     <button
                         type="button"
-                        className="cursor-pointer rounded-full border border-red-200 bg-white px-4.5 py-2.5 text-sm font-bold text-danger transition hover:border-red-400"
+                        className="text-danger cursor-pointer rounded-full border border-red-200 bg-white px-4.5 py-2.5 text-sm font-bold transition hover:border-red-400"
                         onClick={() => setPending('rejected')}
                     >
                         Reject
@@ -120,7 +137,7 @@ const PartnerBooking: InertiaComponent<PartnerBookingProps> = ({ booking, disput
             {booking.status === 'confirmed' ? (
                 <button
                     type="button"
-                    className="mt-4 cursor-pointer rounded-full border border-line bg-white px-4.5 py-2.5 text-sm font-bold text-brand-900 transition hover:border-brand-700"
+                    className="border-line text-brand-900 hover:border-brand-700 mt-4 cursor-pointer rounded-full border bg-white px-4.5 py-2.5 text-sm font-bold transition"
                     onClick={() => setPending('completed')}
                 >
                     Mark finished

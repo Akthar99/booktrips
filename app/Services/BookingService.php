@@ -101,7 +101,7 @@ class BookingService
             $phone = $this->phones->normalise($business->phone);
 
             if ($phone !== null) {
-                $this->sms->send($phone, "New BookTrips request {$booking->booking_code}: {$booking->guest_name}, {$booking->guests} guests, {$booking->check_in->toDateString()}. Confirm in your dashboard.");
+                $this->sms->queue($phone, "New BookTrips request {$booking->booking_code}: {$booking->guest_name}, {$booking->guests} guests, {$booking->check_in->toDateString()}. Confirm in your dashboard.");
             }
         }
 
@@ -133,6 +133,10 @@ class BookingService
 
         if (in_array($status, [BookingStatus::Confirmed, BookingStatus::Rejected], true)) {
             $this->mail->quietSend($booking->user?->email, new BookingDecisionMail($booking->refresh(), $status));
+        }
+
+        if ($status === BookingStatus::Confirmed) {
+            $this->textTravellerAboutConfirmation($booking->refresh());
         }
 
         $this->notifyTraveller($booking->refresh(), $status);
@@ -187,6 +191,33 @@ class BookingService
             $booking->id,
             route('partner.bookings.show', $booking),
         );
+
+        $phone = $this->phones->normalise($business->phone);
+
+        if ($phone !== null) {
+            $this->sms->queue(
+                $phone,
+                "BookTrips: {$booking->guest_name} cancelled booking {$booking->booking_code} on {$booking->check_in->toDateString()}. Those dates are free again.",
+            );
+        }
+    }
+
+    /**
+     * The host accepted the request — text the traveller so they hear it now.
+     */
+    private function textTravellerAboutConfirmation(Booking $booking): void
+    {
+        $booking->loadMissing('user');
+
+        $phone = $this->phones->normalise($booking->guest_phone)
+            ?? $this->phones->normalise($booking->user?->phone);
+
+        if ($phone !== null) {
+            $this->sms->queue(
+                $phone,
+                "BookTrips: booking {$booking->booking_code} on {$booking->check_in->toDateString()} is confirmed. Pay the host when you arrive.",
+            );
+        }
     }
 
     /**

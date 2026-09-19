@@ -59,7 +59,10 @@ function formatDate(value: string | null): string {
 
 const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
     const [q, setQ] = useState('');
-    const [pending, setPending] = useState<{ business: PartnerRow; approved: boolean } | null>(null);
+    const [pending, setPending] = useState<{
+        business: PartnerRow;
+        approved: boolean;
+    } | null>(null);
     const [detail, setDetail] = useState<PartnerRow | null>(null);
     const [busy, setBusy] = useState(false);
 
@@ -114,11 +117,13 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                     onChange={(event) => setQ(event.target.value)}
                 />
             </form>
-            <p className="mb-3 text-[13px] text-muted">{filtered.length} shown</p>
-            <div className="overflow-x-auto rounded-2xl border border-line bg-white">
+            <p className="text-muted mb-3 text-[13px]">
+                {filtered.length} shown
+            </p>
+            <div className="border-line overflow-x-auto rounded-2xl border bg-white">
                 <table className="w-full border-collapse text-left">
                     <thead>
-                        <tr className="bg-cream-dark text-[11px] tracking-wide text-muted uppercase">
+                        <tr className="bg-cream-dark text-muted text-[11px] tracking-wide uppercase">
                             <th className="px-3.5 py-3 font-bold">Business</th>
                             <th className="px-3.5 py-3 font-bold">Owner</th>
                             <th className="px-3.5 py-3 font-bold">City</th>
@@ -129,33 +134,51 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                     </thead>
                     <tbody>
                         {filtered.map((business) => (
-                            <tr key={business.id} className="border-t border-line">
+                            <tr
+                                key={business.id}
+                                className="border-line border-t"
+                            >
                                 <td className="px-3.5 py-3 text-sm">
                                     <strong>{business.name}</strong>
-                                    <div className="text-xs text-muted">{business.type.replace('_', ' ')}</div>
+                                    <div className="text-muted text-xs">
+                                        {business.type.replace('_', ' ')}
+                                    </div>
                                 </td>
                                 <td className="px-3.5 py-3 text-sm">
                                     {business.owner?.name}
                                     <br />
-                                    <span className="text-muted">{business.owner?.email}</span>
+                                    <span className="text-muted">
+                                        {business.owner?.email}
+                                    </span>
                                 </td>
-                                <td className="px-3.5 py-3 text-sm">{business.city}</td>
+                                <td className="px-3.5 py-3 text-sm">
+                                    {business.city}
+                                </td>
                                 <td className="px-3.5 py-3 text-xs">
                                     {business.instagram ? <div>IG</div> : null}
                                     {business.facebook ? <div>FB</div> : null}
                                     {business.website ? (
-                                        <a className="font-bold text-brand-800" href={business.website}>
+                                        <a
+                                            className="text-brand-800 font-bold"
+                                            href={business.website}
+                                        >
                                             web
                                         </a>
                                     ) : null}
                                 </td>
                                 <td className="px-3.5 py-3">
-                                    <StatusBadge status={business.approved ? 'approved' : 'pending'} />
+                                    <StatusBadge
+                                        status={
+                                            business.approved
+                                                ? 'approved'
+                                                : 'pending'
+                                        }
+                                    />
                                 </td>
                                 <td className="px-3.5 py-3 text-right whitespace-nowrap">
                                     <button
                                         type="button"
-                                        className="mr-3 cursor-pointer border-0 bg-transparent text-[13px] font-bold text-brand-900"
+                                        className="text-brand-900 mr-3 cursor-pointer border-0 bg-transparent text-[13px] font-bold"
                                         onClick={() => setDetail(business)}
                                     >
                                         View
@@ -163,16 +186,26 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                                     {business.approved ? (
                                         <button
                                             type="button"
-                                            className="cursor-pointer rounded-full border border-red-200 bg-white px-3 py-1.5 text-[13px] font-bold text-danger transition hover:border-red-400"
-                                            onClick={() => setPending({ business, approved: false })}
+                                            className="text-danger cursor-pointer rounded-full border border-red-200 bg-white px-3 py-1.5 text-[13px] font-bold transition hover:border-red-400"
+                                            onClick={() =>
+                                                setPending({
+                                                    business,
+                                                    approved: false,
+                                                })
+                                            }
                                         >
                                             Revoke
                                         </button>
                                     ) : (
                                         <button
                                             type="button"
-                                            className="cursor-pointer rounded-full bg-brand-800 px-3 py-1.5 text-[13px] font-bold text-white transition hover:bg-brand-900"
-                                            onClick={() => setPending({ business, approved: true })}
+                                            className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-3 py-1.5 text-[13px] font-bold text-white transition"
+                                            onClick={() =>
+                                                setPending({
+                                                    business,
+                                                    approved: true,
+                                                })
+                                            }
                                         >
                                             Approve
                                         </button>
@@ -191,16 +224,25 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
 
             <ConfirmDialog
                 open={pending !== null}
-                title={pending?.approved ? 'Approve this partner?' : 'Revoke this partner?'}
+                title={
+                    pending?.approved
+                        ? 'Approve this partner?'
+                        : 'Revoke this partner?'
+                }
                 message={
                     pending?.approved
                         ? 'The business owner will be able to publish packages and manage reservations.'
                         : 'The business owner will lose access to partner tools and their packages will no longer be manageable.'
                 }
-                confirmLabel={pending?.approved ? 'Approve partner' : 'Revoke partner'}
+                confirmLabel={
+                    pending?.approved ? 'Approve partner' : 'Revoke partner'
+                }
                 danger={pending ? !pending.approved : false}
                 busy={busy}
-                onConfirm={() => pending && setApproved(pending.business.id, pending.approved)}
+                onConfirm={() =>
+                    pending &&
+                    setApproved(pending.business.id, pending.approved)
+                }
                 onCancel={() => setPending(null)}
             />
 
@@ -213,7 +255,7 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                     onClick={() => setDetail(null)}
                 >
                     <div
-                        className="w-full max-w-[720px] rounded-[20px] border border-line bg-white p-6 shadow-card"
+                        className="border-line shadow-card w-full max-w-[720px] rounded-[20px] border bg-white p-6"
                         onClick={(event) => event.stopPropagation()}
                     >
                         <div className="mb-4 flex items-start justify-between gap-4">
@@ -221,10 +263,16 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                                 <h2 className="text-3xl">{detail.name}</h2>
                                 <p className="text-muted">
                                     {detail.type_label} · {detail.city}
-                                    {detail.district ? `, ${detail.district}` : ''}
+                                    {detail.district
+                                        ? `, ${detail.district}`
+                                        : ''}
                                 </p>
                             </div>
-                            <StatusBadge status={detail.approved ? 'approved' : 'pending'} />
+                            <StatusBadge
+                                status={
+                                    detail.approved ? 'approved' : 'pending'
+                                }
+                            />
                         </div>
 
                         {detail.cover_image ? (
@@ -237,75 +285,95 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
 
                         <dl className="grid gap-3 sm:grid-cols-2">
                             <div>
-                                <dt className="text-[11px] font-bold tracking-wide text-muted uppercase">
+                                <dt className="text-muted text-[11px] font-bold tracking-wide uppercase">
                                     Owner
                                 </dt>
                                 <dd className="text-sm">
                                     {detail.owner?.name ?? '—'}
                                     <br />
-                                    <span className="text-muted">{detail.owner?.email ?? ''}</span>
+                                    <span className="text-muted">
+                                        {detail.owner?.email ?? ''}
+                                    </span>
                                     {detail.owner?.email_verified ? (
-                                        <span className="block text-xs font-bold text-brand-800">
+                                        <span className="text-brand-800 block text-xs font-bold">
                                             Email verified
                                         </span>
                                     ) : (
-                                        <span className="block text-xs font-bold text-warn">Email not verified</span>
+                                        <span className="text-warn block text-xs font-bold">
+                                            Email not verified
+                                        </span>
                                     )}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-[11px] font-bold tracking-wide text-muted uppercase">
+                                <dt className="text-muted text-[11px] font-bold tracking-wide uppercase">
                                     Mobile
                                 </dt>
                                 <dd className="text-sm">
                                     {detail.phone ?? detail.owner?.phone ?? '—'}
                                     {detail.phone_verified_at ? (
-                                        <span className="block text-xs font-bold text-brand-800">
-                                            Verified by SMS {formatDate(detail.phone_verified_at)}
+                                        <span className="text-brand-800 block text-xs font-bold">
+                                            Verified by SMS{' '}
+                                            {formatDate(
+                                                detail.phone_verified_at,
+                                            )}
                                         </span>
                                     ) : (
-                                        <span className="block text-xs font-bold text-warn">Not verified</span>
+                                        <span className="text-warn block text-xs font-bold">
+                                            Not verified
+                                        </span>
                                     )}
                                 </dd>
                             </div>
                             <div>
-                                <dt className="text-[11px] font-bold tracking-wide text-muted uppercase">
+                                <dt className="text-muted text-[11px] font-bold tracking-wide uppercase">
                                     Submitted
                                 </dt>
-                                <dd className="text-sm">{formatDate(detail.created_at)}</dd>
+                                <dd className="text-sm">
+                                    {formatDate(detail.created_at)}
+                                </dd>
                             </div>
                             <div>
-                                <dt className="text-[11px] font-bold tracking-wide text-muted uppercase">
+                                <dt className="text-muted text-[11px] font-bold tracking-wide uppercase">
                                     Address
                                 </dt>
-                                <dd className="text-sm">{detail.address ?? '—'}</dd>
+                                <dd className="text-sm">
+                                    {detail.address ?? '—'}
+                                </dd>
                             </div>
                         </dl>
 
                         <div className="mt-4">
-                            <span className="text-[11px] font-bold tracking-wide text-muted uppercase">
+                            <span className="text-muted text-[11px] font-bold tracking-wide uppercase">
                                 About the business
                             </span>
-                            <p className="text-sm whitespace-pre-line text-ink">
-                                {detail.description || 'No description was provided.'}
+                            <p className="text-ink text-sm whitespace-pre-line">
+                                {detail.description ||
+                                    'No description was provided.'}
                             </p>
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
-                            {([
-                                ['Website', detail.website],
-                                ['Instagram', detail.instagram],
-                                ['Facebook', detail.facebook],
-                                ['TikTok', detail.tiktok],
-                                ['WhatsApp', detail.whatsapp],
-                            ] as Array<[string, string | null]>).map(([label, value]) =>
+                            {(
+                                [
+                                    ['Website', detail.website],
+                                    ['Instagram', detail.instagram],
+                                    ['Facebook', detail.facebook],
+                                    ['TikTok', detail.tiktok],
+                                    ['WhatsApp', detail.whatsapp],
+                                ] as Array<[string, string | null]>
+                            ).map(([label, value]) =>
                                 value ? (
                                     <a
                                         key={label}
-                                        href={label === 'WhatsApp' ? `https://wa.me/${value.replace(/[^0-9]/g, '')}` : value}
+                                        href={
+                                            label === 'WhatsApp'
+                                                ? `https://wa.me/${value.replace(/[^0-9]/g, '')}`
+                                                : value
+                                        }
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="rounded-full border border-line bg-white px-3 py-1.5 text-[13px] font-semibold"
+                                        className="border-line rounded-full border bg-white px-3 py-1.5 text-[13px] font-semibold"
                                     >
                                         {label}
                                     </a>
@@ -316,7 +384,7 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                         <div className="mt-5 flex items-center justify-end gap-2">
                             <button
                                 type="button"
-                                className="cursor-pointer rounded-full border border-line bg-white px-4.5 py-2.5 text-sm font-bold text-brand-900"
+                                className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-4.5 py-2.5 text-sm font-bold"
                                 onClick={() => setDetail(null)}
                             >
                                 Close
@@ -324,16 +392,26 @@ const AdminPartners: InertiaComponent<PartnersProps> = ({ businesses }) => {
                             {detail.approved ? (
                                 <button
                                     type="button"
-                                    className="cursor-pointer rounded-full border border-red-200 bg-white px-4.5 py-2.5 text-sm font-bold text-danger"
-                                    onClick={() => setPending({ business: detail, approved: false })}
+                                    className="text-danger cursor-pointer rounded-full border border-red-200 bg-white px-4.5 py-2.5 text-sm font-bold"
+                                    onClick={() =>
+                                        setPending({
+                                            business: detail,
+                                            approved: false,
+                                        })
+                                    }
                                 >
                                     Revoke access
                                 </button>
                             ) : (
                                 <button
                                     type="button"
-                                    className="cursor-pointer rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
-                                    onClick={() => setPending({ business: detail, approved: true })}
+                                    className="bg-brand-800 hover:bg-brand-900 cursor-pointer rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition"
+                                    onClick={() =>
+                                        setPending({
+                                            business: detail,
+                                            approved: true,
+                                        })
+                                    }
                                 >
                                     Approve partner
                                 </button>

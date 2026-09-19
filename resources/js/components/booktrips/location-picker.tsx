@@ -6,7 +6,12 @@ import { Field, Input } from '@/components/booktrips/field';
 
 type GeoHit = { label: string; lat: number; lng: number; name: string };
 
-type Patch = { location: string; address: string; lat: number | null; lng: number | null };
+type Patch = {
+    location: string;
+    address: string;
+    lat: number | null;
+    lng: number | null;
+};
 
 export default function LocationPicker({
     value,
@@ -30,9 +35,13 @@ export default function LocationPicker({
         }
 
         const timer = setTimeout(() => {
-            fetch(geoSearch.url({ query: { q: query } }), { headers: { Accept: 'application/json' } })
+            fetch(geoSearch.url({ query: { q: query } }), {
+                headers: { Accept: 'application/json' },
+            })
                 .then((response) => response.json())
-                .then((data: { results?: GeoHit[] }) => setHits(data.results ?? []))
+                .then((data: { results?: GeoHit[] }) =>
+                    setHits(data.results ?? []),
+                )
                 .catch(() => setHits([]));
         }, 350);
 
@@ -40,7 +49,12 @@ export default function LocationPicker({
     }, [query]);
 
     function pick(hit: GeoHit) {
-        onChange({ location: hit.name, address: hit.label, lat: hit.lat, lng: hit.lng });
+        onChange({
+            location: hit.name,
+            address: hit.label,
+            lat: hit.lat,
+            lng: hit.lng,
+        });
         setQuery(hit.label);
         setHits([]);
     }
@@ -59,7 +73,10 @@ export default function LocationPicker({
         setHits([]);
     }
 
-    const pinned = value.lat !== null && value.lng !== null && (value.lat !== 0 || value.lng !== 0);
+    const pinned =
+        value.lat !== null &&
+        value.lng !== null &&
+        (value.lat !== 0 || value.lng !== 0);
     const pin = pinned
         ? [
               {
@@ -82,16 +99,21 @@ export default function LocationPicker({
 
                     setQuery(text);
                     // Typing invalidates any previously picked coordinates.
-                    onChange({ location: text, address: text, lat: null, lng: null });
+                    onChange({
+                        location: text,
+                        address: text,
+                        lat: null,
+                        lng: null,
+                    });
                 }}
             />
             {hits.length ? (
-                <div className="mt-1.5 max-h-[220px] overflow-y-auto rounded-xl border border-line bg-white">
+                <div className="border-line mt-1.5 max-h-[220px] overflow-y-auto rounded-xl border bg-white">
                     {hits.map((hit) => (
                         <button
                             type="button"
                             key={`${hit.lat}-${hit.lng}`}
-                            className="block w-full cursor-pointer border-b border-line bg-white px-3 py-2.5 text-left text-[13px] hover:bg-brand-50"
+                            className="border-line hover:bg-brand-50 block w-full cursor-pointer border-b bg-white px-3 py-2.5 text-left text-[13px]"
                             onClick={() => pick(hit)}
                         >
                             {hit.label}
@@ -99,8 +121,9 @@ export default function LocationPicker({
                     ))}
                 </div>
             ) : null}
-            <p className="mt-1.5 text-[12px] text-muted">
-                Pick a suggestion above, or click anywhere on the map to drop the pin yourself.
+            <p className="text-muted mt-1.5 text-[12px]">
+                Pick a suggestion above, or click anywhere on the map to drop
+                the pin yourself.
             </p>
             <div className="mt-2.5">
                 <MapView
@@ -113,22 +136,25 @@ export default function LocationPicker({
                 />
             </div>
             {pinned ? (
-                <div className="mt-2 flex items-center gap-2 text-[12px] text-muted">
+                <div className="text-muted mt-2 flex items-center gap-2 text-[12px]">
                     <MapPin size={14} className="text-brand-800" />
                     <span>
                         Pinned at {value.lat}, {value.lng}
                     </span>
                     <button
                         type="button"
-                        className="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-[12px] font-bold text-brand-800"
-                        onClick={() => onChange({ ...value, lat: null, lng: null })}
+                        className="text-brand-800 inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-[12px] font-bold"
+                        onClick={() =>
+                            onChange({ ...value, lat: null, lng: null })
+                        }
                     >
                         <X size={13} /> Clear pin
                     </button>
                 </div>
             ) : (
-                <p className="mt-2 text-[12px] font-semibold text-warn">
-                    No pin yet — travellers will not see this package on the map.
+                <p className="text-warn mt-2 text-[12px] font-semibold">
+                    No pin yet — travellers will not see this package on the
+                    map.
                 </p>
             )}
         </Field>

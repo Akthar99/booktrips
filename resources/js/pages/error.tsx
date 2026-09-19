@@ -23,12 +23,12 @@ const ErrorPage: InertiaComponent<ErrorProps> = ({ status }) => {
 
     return (
         <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
-            <div className="w-full max-w-[520px] rounded-[20px] border border-line bg-white p-8 text-center shadow-card">
+            <div className="border-line shadow-card w-full max-w-[520px] rounded-[20px] border bg-white p-8 text-center">
                 <h1 className="mb-2 text-3xl">{title}</h1>
-                <p className="mb-5 text-muted">{description}</p>
+                <p className="text-muted mb-5">{description}</p>
                 <Link
                     href="/"
-                    className="inline-flex rounded-full bg-brand-800 px-4.5 py-2.5 text-sm font-bold text-white transition hover:bg-brand-900"
+                    className="bg-brand-800 hover:bg-brand-900 inline-flex rounded-full px-4.5 py-2.5 text-sm font-bold text-white transition"
                 >
                     Back home
                 </Link>

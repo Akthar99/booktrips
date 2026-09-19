@@ -45,7 +45,15 @@ export default function NotifyBell() {
         setOpen((value) => !value);
 
         if (!open && unread > 0) {
-            router.post(readAll.url(), {}, { preserveScroll: true, preserveState: true, only: ['notifications'] });
+            router.post(
+                readAll.url(),
+                {},
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    only: ['notifications'],
+                },
+            );
         }
     }
 
@@ -71,29 +79,37 @@ export default function NotifyBell() {
         <div className="relative" ref={wrap}>
             <button
                 type="button"
-                className="relative grid cursor-pointer place-items-center border-0 bg-transparent p-2 text-brand-900"
+                className="text-brand-900 relative grid cursor-pointer place-items-center border-0 bg-transparent p-2"
                 onClick={toggle}
                 aria-label="Notifications"
             >
                 <Bell size={20} />
                 {unread ? (
-                    <em className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-0.5 text-[10px] text-white not-italic">
+                    <em className="bg-danger absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full px-0.5 text-[10px] text-white not-italic">
                         {unread > 9 ? '9+' : unread}
                     </em>
                 ) : null}
             </button>
             {open ? (
-                <div className="absolute top-[calc(100%+8px)] right-0 z-90 max-h-[360px] w-70 overflow-auto rounded-[14px] border border-line bg-white p-2 shadow-card">
-                    {items.length === 0 ? <p className="p-2.5 text-sm text-muted">No notifications</p> : null}
+                <div className="border-line shadow-card absolute top-[calc(100%+8px)] right-0 z-90 max-h-[360px] w-70 overflow-auto rounded-[14px] border bg-white p-2">
+                    {items.length === 0 ? (
+                        <p className="text-muted p-2.5 text-sm">
+                            No notifications
+                        </p>
+                    ) : null}
                     {items.slice(0, 8).map((notification) => (
                         <Link
                             key={notification.id}
                             href={notificationLink(notification)}
-                            className="block rounded-[10px] px-3 py-2.5 hover:bg-brand-50"
+                            className="hover:bg-brand-50 block rounded-[10px] px-3 py-2.5"
                             onClick={() => setOpen(false)}
                         >
-                            <strong className="block text-[13px] text-brand-900">{notification.title}</strong>
-                            <span className="block text-xs font-medium text-muted">{notification.body}</span>
+                            <strong className="text-brand-900 block text-[13px]">
+                                {notification.title}
+                            </strong>
+                            <span className="text-muted block text-xs font-medium">
+                                {notification.body}
+                            </span>
                         </Link>
                     ))}
                 </div>

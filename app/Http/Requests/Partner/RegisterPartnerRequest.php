@@ -42,6 +42,7 @@ class RegisterPartnerRequest extends FormRequest
             'facebook' => ['nullable', 'string', 'max:2048'],
             'tiktok' => ['nullable', 'string', 'max:2048'],
             'whatsapp' => ['nullable', 'string', 'max:40'],
+            'terms' => ['accepted'],
         ];
     }
 
@@ -53,6 +54,7 @@ class RegisterPartnerRequest extends FormRequest
         return [
             'email.unique' => 'This email already has a BookTrips account. Sign in, then use the partner application again to upgrade it.',
             'phone.required' => 'We need a mobile number to verify before your application is accepted.',
+            'terms.accepted' => 'Please accept the Terms of Service and the Privacy Policy to apply.',
         ];
     }
 

@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, router, useForm } from '@inertiajs/react';
-import { reply as adminReply, status as adminStatus } from '@/actions/App/Http/Controllers/Admin/AdminSupportController';
+import {
+    reply as adminReply,
+    status as adminStatus,
+} from '@/actions/App/Http/Controllers/Admin/AdminSupportController';
 import Alert from '@/components/booktrips/alert';
 import Button from '@/components/booktrips/button';
 import { Input, Textarea } from '@/components/booktrips/field';
@@ -23,7 +26,13 @@ type TicketRow = {
 };
 
 type TicketThread = TicketRow & {
-    messages: Array<{ id: number; body: string; is_staff: boolean; author: string; created_at: string | null }>;
+    messages: Array<{
+        id: number;
+        body: string;
+        is_staff: boolean;
+        author: string;
+        created_at: string | null;
+    }>;
 };
 
 type AdminSupportProps = {
@@ -40,12 +49,21 @@ const STATUS_TONES: Record<string, string> = {
     resolved: 'bg-cream-dark text-muted',
 };
 
-const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, filters, counts }) => {
+const AdminSupport: InertiaComponent<AdminSupportProps> = ({
+    tickets,
+    selected,
+    filters,
+    counts,
+}) => {
     const [q, setQ] = useState(filters.q);
     const reply = useForm({ body: '' });
 
     function filter(patch: Record<string, string>) {
-        router.get('/admin/support', { ...filters, ...patch }, { preserveScroll: true, preserveState: true });
+        router.get(
+            '/admin/support',
+            { ...filters, ...patch },
+            { preserveScroll: true, preserveState: true },
+        );
     }
 
     function submitReply(event: React.FormEvent) {
@@ -67,7 +85,7 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
             <Tabs items={ADMIN_TABS} />
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-2xl">Support inbox</h2>
-                <span className="text-[13px] text-muted">
+                <span className="text-muted text-[13px]">
                     {counts.open} open · {counts.awaiting_admin} waiting on us
                 </span>
             </div>
@@ -99,9 +117,11 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
             </form>
 
             <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
-                <div className="h-fit overflow-hidden rounded-2xl border border-line bg-white">
+                <div className="border-line h-fit overflow-hidden rounded-2xl border bg-white">
                     {tickets.data.length === 0 ? (
-                        <p className="px-4 py-3 text-[13px] text-muted">Nothing here.</p>
+                        <p className="text-muted px-4 py-3 text-[13px]">
+                            Nothing here.
+                        </p>
                     ) : null}
                     {tickets.data.map((ticket) => (
                         <Link
@@ -109,26 +129,31 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
                             href={`/admin/support?status=${filters.status}&ticket=${ticket.id}`}
                             preserveScroll
                             className={cn(
-                                'block border-b border-line px-4 py-3 transition hover:bg-cream',
+                                'border-line hover:bg-cream block border-b px-4 py-3 transition',
                                 selected?.id === ticket.id && 'bg-cream',
                             )}
                         >
-                            <strong className="block text-[13px] text-brand-900">{ticket.subject}</strong>
-                            <span className="text-[12px] text-muted">
+                            <strong className="text-brand-900 block text-[13px]">
+                                {ticket.subject}
+                            </strong>
+                            <span className="text-muted text-[12px]">
                                 {ticket.user?.name} · {ticket.user?.email}
                             </span>
                             <div className="mt-1.5 flex items-center gap-2">
                                 <span
                                     className={cn(
                                         'rounded-full px-2 py-0.5 text-[11px] font-bold',
-                                        STATUS_TONES[ticket.status] ?? 'bg-cream-dark text-muted',
+                                        STATUS_TONES[ticket.status] ??
+                                            'bg-cream-dark text-muted',
                                     )}
                                 >
                                     {ticket.status_label}
                                 </span>
-                                <span className="text-[11px] text-muted">
+                                <span className="text-muted text-[11px]">
                                     {ticket.last_message_at
-                                        ? new Date(ticket.last_message_at).toLocaleString('en-GB')
+                                        ? new Date(
+                                              ticket.last_message_at,
+                                          ).toLocaleString('en-GB')
                                         : ''}
                                 </span>
                             </div>
@@ -144,22 +169,29 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
                 </div>
 
                 {selected ? (
-                    <div className="rounded-2xl border border-line bg-white p-5">
+                    <div className="border-line rounded-2xl border bg-white p-5">
                         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                             <div>
                                 <h2 className="text-2xl">{selected.subject}</h2>
-                                <p className="text-[13px] text-muted">
-                                    {selected.user?.name} · {selected.user?.email} · {selected.category_label}
-                                    {selected.user?.role === 'business' ? ' · partner' : ''}
+                                <p className="text-muted text-[13px]">
+                                    {selected.user?.name} ·{' '}
+                                    {selected.user?.email} ·{' '}
+                                    {selected.category_label}
+                                    {selected.user?.role === 'business'
+                                        ? ' · partner'
+                                        : ''}
                                 </p>
                             </div>
                             <div className="flex gap-2">
                                 {selected.status === 'resolved' ? (
                                     <button
                                         type="button"
-                                        className="cursor-pointer rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-bold text-brand-900"
+                                        className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-3.5 py-2 text-[13px] font-bold"
                                         onClick={() =>
-                                            router.patch(adminStatus.url(selected.id), { status: 'awaiting_admin' })
+                                            router.patch(
+                                                adminStatus.url(selected.id),
+                                                { status: 'awaiting_admin' },
+                                            )
                                         }
                                     >
                                         Reopen
@@ -167,8 +199,13 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
                                 ) : (
                                     <button
                                         type="button"
-                                        className="cursor-pointer rounded-full border border-line bg-white px-3.5 py-2 text-[13px] font-bold text-brand-900"
-                                        onClick={() => router.patch(adminStatus.url(selected.id), { status: 'resolved' })}
+                                        className="border-line text-brand-900 cursor-pointer rounded-full border bg-white px-3.5 py-2 text-[13px] font-bold"
+                                        onClick={() =>
+                                            router.patch(
+                                                adminStatus.url(selected.id),
+                                                { status: 'resolved' },
+                                            )
+                                        }
                                     >
                                         Mark resolved
                                     </button>
@@ -182,18 +219,24 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
                                     key={message.id}
                                     className={cn(
                                         'rounded-xl px-3.5 py-2.5',
-                                        message.is_staff ? 'bg-brand-50' : 'bg-cream',
+                                        message.is_staff
+                                            ? 'bg-brand-50'
+                                            : 'bg-cream',
                                     )}
                                 >
-                                    <div className="mb-1 flex items-center justify-between gap-2 text-[11px] font-bold tracking-wide text-muted uppercase">
+                                    <div className="text-muted mb-1 flex items-center justify-between gap-2 text-[11px] font-bold tracking-wide uppercase">
                                         <span>{message.author}</span>
                                         <span>
                                             {message.created_at
-                                                ? new Date(message.created_at).toLocaleString('en-GB')
+                                                ? new Date(
+                                                      message.created_at,
+                                                  ).toLocaleString('en-GB')
                                                 : ''}
                                         </span>
                                     </div>
-                                    <p className="text-[13px] whitespace-pre-line">{message.body}</p>
+                                    <p className="text-[13px] whitespace-pre-line">
+                                        {message.body}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -202,10 +245,14 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
                             <Textarea
                                 placeholder="Reply to the user — they get an email and an in-app alert…"
                                 value={reply.data.body}
-                                onChange={(event) => reply.setData('body', event.target.value)}
+                                onChange={(event) =>
+                                    reply.setData('body', event.target.value)
+                                }
                             />
                             {Object.values(reply.errors)[0] ? (
-                                <Alert tone="error">{Object.values(reply.errors)[0]}</Alert>
+                                <Alert tone="error">
+                                    {Object.values(reply.errors)[0]}
+                                </Alert>
                             ) : null}
                             <Button type="submit" disabled={reply.processing}>
                                 {reply.processing ? 'Sending…' : 'Send reply'}
@@ -213,7 +260,7 @@ const AdminSupport: InertiaComponent<AdminSupportProps> = ({ tickets, selected, 
                         </form>
                     </div>
                 ) : (
-                    <div className="rounded-2xl border border-line bg-white p-6 text-sm text-muted">
+                    <div className="border-line text-muted rounded-2xl border bg-white p-6 text-sm">
                         Pick a thread to read the conversation.
                     </div>
                 )}

@@ -2,10 +2,10 @@
 
 Partner photos and payment receipts live on S3 once `AWS_BUCKET` is set:
 
-| What | Disk | Key prefix | Served via |
-| --- | --- | --- | --- |
-| Package photos | `s3` | `packages/{businessId}/...` | public URL — `https://{bucket}.s3.{region}.amazonaws.com/...` (or `AWS_URL` / CDN) |
-| Payment receipts | `s3` | `receipts/{businessId}/...` | 5-minute **presigned URL** via `ReceiptDownloadController` (never public) |
+| What             | Disk | Key prefix                  | Served via                                                                         |
+| ---------------- | ---- | --------------------------- | ---------------------------------------------------------------------------------- |
+| Package photos   | `s3` | `packages/{businessId}/...` | public URL — `https://{bucket}.s3.{region}.amazonaws.com/...` (or `AWS_URL` / CDN) |
+| Payment receipts | `s3` | `receipts/{businessId}/...` | 5-minute **presigned URL** via `ReceiptDownloadController` (never public)          |
 
 When `AWS_BUCKET` is empty (local dev, CI, tests) the app falls back to the local `public` and
 `local` disks, so nothing here is required to run the project on your machine. `phpunit.xml` pins
@@ -49,19 +49,19 @@ URLs. Set it only when you front the bucket with CloudFront or a custom domain.
 
 ```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-      "Resource": "arn:aws:s3:::booktips-bucket/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["s3:ListBucket"],
-      "Resource": "arn:aws:s3:::booktips-bucket"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+            "Resource": "arn:aws:s3:::booktips-bucket/*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": ["s3:ListBucket"],
+            "Resource": "arn:aws:s3:::booktips-bucket"
+        }
+    ]
 }
 ```
 
@@ -70,16 +70,16 @@ URLs. Set it only when you front the bucket with CloudFront or a custom domain.
 
 ```json
 {
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PublicPackages",
-      "Effect": "Allow",
-      "Principal": "*",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::booktips-bucket/packages/*"
-    }
-  ]
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicPackages",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::booktips-bucket/packages/*"
+        }
+    ]
 }
 ```
 

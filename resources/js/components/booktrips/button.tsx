@@ -8,7 +8,8 @@ const VARIANTS: Record<Variant, string> = {
     primary: 'bg-brand-800 text-white hover:bg-brand-900',
     dark: 'bg-navy-900 text-white hover:bg-navy-950',
     ghost: 'bg-transparent text-brand-900 hover:bg-brand-50',
-    outline: 'border border-line bg-white text-brand-900 hover:border-brand-700',
+    outline:
+        'border border-line bg-white text-brand-900 hover:border-brand-700',
     danger: 'border border-red-200 bg-white text-danger hover:border-red-400',
 };
 

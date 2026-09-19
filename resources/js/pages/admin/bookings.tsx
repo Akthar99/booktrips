@@ -12,7 +12,11 @@ type AdminBookingsProps = {
     counts: { requested: number; confirmed: number };
 };
 
-const AdminBookings: InertiaComponent<AdminBookingsProps> = ({ bookings, filters, counts }) => {
+const AdminBookings: InertiaComponent<AdminBookingsProps> = ({
+    bookings,
+    filters,
+    counts,
+}) => {
     return (
         <div className="mx-auto w-[min(1280px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">Super admin</h1>

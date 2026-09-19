@@ -11,17 +11,25 @@ type PartnerBookingsProps = {
     counts: { requested: number; confirmed: number };
 };
 
-const PartnerBookings: InertiaComponent<PartnerBookingsProps> = ({ bookings, filters, counts }) => {
+const PartnerBookings: InertiaComponent<PartnerBookingsProps> = ({
+    bookings,
+    filters,
+    counts,
+}) => {
     return (
         <div className="mx-auto w-[min(1180px,calc(100%-2rem))] py-7 pb-14">
             <h1 className="text-4xl">Reservations</h1>
             <p className="text-muted">
-                Confirm or reject requests. Mark a stay finished when the guest has gone — that adds 10% to your
-                bill.
+                Confirm or reject requests. Mark a stay finished when the guest
+                has gone — that adds 10% to your bill.
             </p>
             <Tabs
                 items={[
-                    { label: 'Overview', href: '/partners/dashboard', exact: true },
+                    {
+                        label: 'Overview',
+                        href: '/partners/dashboard',
+                        exact: true,
+                    },
                     { label: 'Reservations', href: '/partners/bookings' },
                     { label: 'Analytics', href: '/partners/analytics' },
                     { label: 'Finance', href: '/partners/payments' },
@@ -33,7 +41,9 @@ const PartnerBookings: InertiaComponent<PartnerBookingsProps> = ({ bookings, fil
                 counts={counts}
                 mode="partner"
                 baseUrl="/partners/bookings"
-                statusUrlFor={(bookingId) => partnerBookingStatus.url(bookingId)}
+                statusUrlFor={(bookingId) =>
+                    partnerBookingStatus.url(bookingId)
+                }
             />
         </div>
     );
